@@ -11,8 +11,8 @@ export function meta() {
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  await requireUser(request, context);
-  return {};
+  const user = await requireUser(request, context);
+  return { user };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -38,6 +38,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   // 招待コードでルームを検索
   const room = await db.query.rooms.findFirst({
     where: (r, { eq }) => eq(r.inviteCode, inviteCode.trim().toUpperCase()),
+    with: { space: true },
   });
 
   if (!room) {
@@ -83,7 +84,6 @@ export async function action({ request, context }: Route.ActionArgs) {
   // すでに参加しているかチェック
   const alreadyJoined = currentPlayers.some((p) => p.userId === user.id);
   if (alreadyJoined) {
-    // すでに参加済みならそのままロビーへ
     throw redirect(`/rooms/${room.id}`);
   }
 
@@ -98,7 +98,6 @@ export async function action({ request, context }: Route.ActionArgs) {
     joinedAt: now,
   });
 
-  // GAP-2: 参加後に room.updated をブロードキャストして全クライアントに通知
   const updatedPlayers = await db.query.roomPlayers.findMany({
     where: (rp, { eq }) => eq(rp.roomId, room.id),
     orderBy: (rp, { asc }) => asc(rp.seatOrder),
@@ -117,83 +116,76 @@ export async function action({ request, context }: Route.ActionArgs) {
   throw redirect(`/rooms/${room.id}`);
 }
 
-export default function RoomsJoin({ actionData }: Route.ComponentProps) {
+export default function RoomsJoin({ loaderData, actionData }: Route.ComponentProps) {
+  const { user } = loaderData;
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <div>
-          <h1 className="text-2xl font-bold text-center text-gray-900">
-            ルームに参加
-          </h1>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            招待コードを入力してルームに参加します
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {/* 戻るリンク */}
+        <a
+          href="/spaces"
+          className="text-indigo-600 text-sm flex items-center gap-1 mb-6 hover:underline"
+        >
+          &larr; スペース一覧に戻る
+        </a>
+
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">ルームに参加</h1>
+        <p className="text-gray-500 text-sm mb-6">招待コードを入力してゲームに参加します</p>
 
         {actionData?.error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
             {actionData.error}
           </div>
         )}
 
-        <Form method="post" className="space-y-6">
-          <div>
-            <label
-              htmlFor="inviteCode"
-              className="block text-sm font-medium text-gray-700"
-            >
-              招待コード
-            </label>
-            <input
-              id="inviteCode"
-              name="inviteCode"
-              type="text"
-              required
-              maxLength={6}
-              placeholder="例: ABC234"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 uppercase"
-              style={{ textTransform: "uppercase" }}
-            />
-            <p className="mt-1 text-xs text-gray-500">6文字の英数字</p>
-          </div>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <Form method="post" className="space-y-4">
+            {/* 招待コード */}
+            <div>
+              <label htmlFor="inviteCode" className="block text-sm font-medium text-gray-700 mb-1">
+                招待コード
+              </label>
+              <input
+                id="inviteCode"
+                name="inviteCode"
+                type="text"
+                required
+                maxLength={6}
+                placeholder="ABC123"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 uppercase tracking-widest font-mono text-center text-lg"
+                style={{ textTransform: "uppercase" }}
+              />
+              <p className="mt-1 text-xs text-gray-400">6文字の英数字</p>
+            </div>
 
-          <div>
-            <label
-              htmlFor="playerName"
-              className="block text-sm font-medium text-gray-700"
-            >
-              このルームでの表示名
-            </label>
-            <input
-              id="playerName"
-              name="playerName"
-              type="text"
-              required
-              maxLength={50}
-              placeholder="例: 田中"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
+            {/* 表示名 */}
+            <div>
+              <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-1">
+                あなたの表示名
+              </label>
+              <input
+                id="playerName"
+                name="playerName"
+                type="text"
+                required
+                maxLength={50}
+                defaultValue={user.name}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
 
-          <div className="flex gap-3">
-            <a
-              href="/rooms"
-              className="flex-1 flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-            >
-              キャンセル
-            </a>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50 transition-colors"
             >
-              {isSubmitting ? "参加中..." : "参加する"}
+              {isSubmitting ? "参加中..." : "ルームに参加する"}
             </button>
-          </div>
-        </Form>
+          </Form>
+        </div>
       </div>
     </div>
   );

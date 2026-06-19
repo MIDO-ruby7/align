@@ -192,7 +192,6 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     .set({ status: "playing" })
     .where(eq(schema.rooms.id, roomId));
 
-  // AC-3: ゲーム開始を全クライアントにブロードキャスト
   const seatOrderInfo = playersWithSeats.map((p) => ({
     playerId: p.id,
     seatOrder: p.seatOrder,
@@ -227,63 +226,86 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
         ? "bg-green-100 text-green-800"
         : "bg-gray-100 text-gray-800";
 
+  const handleCopyInviteCode = () => {
+    navigator.clipboard.writeText(room.inviteCode).catch(() => {});
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto py-8 px-4">
-        <div className="mb-6">
-          <a href="/rooms" className="text-sm text-indigo-600 hover:underline">
-            &larr; ルーム一覧に戻る
-          </a>
+      {/* ヘッダー */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div>
+            <a href="/spaces" className="text-lg font-bold text-indigo-600">
+              Align
+            </a>
+            {/* パンくず */}
+            {room.space && (
+              <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                <a href={`/spaces/${room.spaceId}`} className="hover:text-indigo-600">
+                  {room.space.name}
+                </a>
+                <span>&rsaquo;</span>
+                <span>ゲームロビー</span>
+              </div>
+            )}
+          </div>
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}>
+            {statusLabel}
+          </span>
         </div>
+      </header>
 
+      <div className="max-w-2xl mx-auto py-6 px-4 space-y-4">
         {/* ルーム情報 */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex justify-between items-start">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <div className="flex justify-between items-start mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl font-bold text-gray-900">
                 {room.space?.name ?? "ゲームロビー"}
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-500 mt-0.5">
                 ホスト: {hostUser?.name ?? "不明"}
               </p>
             </div>
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}
-            >
-              {statusLabel}
-            </span>
           </div>
 
-          <div className="mt-4 flex items-center gap-4">
+          {/* 招待コード */}
+          <div className="bg-indigo-50 rounded-xl p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500">招待コード</p>
-              <p className="text-xl font-mono font-bold text-indigo-600 tracking-widest">
+              <p className="text-xs text-indigo-500 font-medium mb-1">招待コード</p>
+              <p className="text-3xl font-mono font-bold text-indigo-700 tracking-widest">
                 {room.inviteCode}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">参加人数</p>
-              <p className="text-xl font-bold text-gray-900">
-                {players.length} / 8
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={handleCopyInviteCode}
+              className="ml-4 px-3 py-2 bg-white border border-indigo-200 rounded-lg text-sm text-indigo-600 font-medium hover:bg-indigo-50 transition-colors"
+            >
+              コピー
+            </button>
+          </div>
+
+          <div className="mt-3 text-sm text-gray-500">
+            参加人数: <span className="font-semibold text-gray-800">{players.length}</span> / 8
           </div>
         </div>
 
-        {/* エラー/成功メッセージ */}
+        {/* エラーメッセージ */}
         {actionData && "error" in actionData && actionData.error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {actionData.error}
           </div>
         )}
 
         {/* 参加者一覧 */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">
             参加者一覧
           </h2>
           {players.length === 0 ? (
-            <p className="text-gray-500 text-sm">参加者はまだいません</p>
+            <p className="text-gray-400 text-sm">参加者はまだいません</p>
           ) : (
             <ul className="space-y-2">
               {players.map((player) => (
@@ -291,7 +313,7 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
                   key={player.id}
                   className="flex items-center gap-3 p-3 rounded-lg bg-gray-50"
                 >
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm flex-shrink-0">
                     {player.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
@@ -299,7 +321,7 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
                       {player.name}
                     </span>
                     {player.userId === user.id && (
-                      <span className="ml-2 text-xs text-gray-500">（あなた）</span>
+                      <span className="ml-2 text-xs text-gray-400">（あなた）</span>
                     )}
                   </div>
                   {player.userId === room.hostUserId && (
@@ -315,11 +337,11 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
 
         {/* ゲーム開始ボタン（ホストのみ） */}
         {isHost && room.status === "waiting" && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">
               ゲーム操作
             </h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               全員が参加したらゲームを開始してください。
             </p>
             <Form method="post">
@@ -327,7 +349,7 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
               <button
                 type="submit"
                 disabled={isStarting || players.length < 1}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isStarting ? "開始中..." : "ゲームを開始する"}
               </button>
@@ -337,7 +359,7 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
 
         {/* ゲーム中の表示 */}
         {room.status === "playing" && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+          <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
             <p className="text-green-800 font-semibold text-lg">
               ゲームが開始されました！
             </p>

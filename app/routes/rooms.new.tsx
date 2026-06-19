@@ -6,7 +6,7 @@ import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../../db/schema";
 
 export function meta() {
-  return [{ title: "ルーム作成 - Align" }];
+  return [{ title: "ゲームを作成 - Align" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -129,7 +129,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function RoomsNew({ loaderData, actionData }: Route.ComponentProps) {
-  const { spaces, preselectedSpaceId } = loaderData;
+  const { user, spaces, preselectedSpaceId } = loaderData;
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
@@ -141,25 +141,40 @@ export default function RoomsNew({ loaderData, actionData }: Route.ComponentProp
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <div>
-          <h1 className="text-2xl font-bold text-center text-gray-900">
-            ルームを作成
-          </h1>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            スペースを選択して新しいゲームルームを作成します
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {/* 戻るリンク */}
+        {autoSelectedSpace ? (
+          <a
+            href={`/spaces/${autoSelectedSpace.id}`}
+            className="text-indigo-600 text-sm flex items-center gap-1 mb-6 hover:underline"
+          >
+            &larr; {autoSelectedSpace.name} に戻る
+          </a>
+        ) : (
+          <a
+            href="/spaces"
+            className="text-indigo-600 text-sm flex items-center gap-1 mb-6 hover:underline"
+          >
+            &larr; スペース一覧に戻る
+          </a>
+        )}
+
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">新しいゲームを作成</h1>
+        {autoSelectedSpace && (
+          <p className="text-gray-500 text-sm mb-6">
+            {autoSelectedSpace.name} のメンバーを招待できます
           </p>
-        </div>
+        )}
 
         {actionData?.error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
             {actionData.error}
           </div>
         )}
 
         {spaces.length === 0 ? (
-          <div className="text-center">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
             <p className="text-gray-500 mb-4">
               ルームを作成するにはスペースへの参加が必要です
             </p>
@@ -171,72 +186,57 @@ export default function RoomsNew({ loaderData, actionData }: Route.ComponentProp
             </a>
           </div>
         ) : (
-          <Form method="post" className="space-y-6">
-            <div>
-              <label
-                htmlFor="spaceId"
-                className="block text-sm font-medium text-gray-700"
-              >
-                スペース
-              </label>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <Form method="post" className="space-y-4">
+              {/* スペース選択 */}
               {autoSelectedSpace ? (
-                <>
-                  <input type="hidden" name="spaceId" value={autoSelectedSpace.id} />
-                  <p className="mt-1 px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-800 text-sm">
-                    {autoSelectedSpace.name}
-                  </p>
-                </>
+                <input type="hidden" name="spaceId" value={autoSelectedSpace.id} />
               ) : (
-                <select
-                  id="spaceId"
-                  name="spaceId"
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="">スペースを選択してください</option>
-                  {spaces.map((space) => (
-                    <option key={space.id} value={space.id}>
-                      {space.name}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <label htmlFor="spaceId" className="block text-sm font-medium text-gray-700 mb-1">
+                    スペース
+                  </label>
+                  <select
+                    id="spaceId"
+                    name="spaceId"
+                    required
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">スペースを選択してください</option>
+                    {spaces.map((space) => (
+                      <option key={space.id} value={space.id}>
+                        {space.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
-            </div>
 
-            <div>
-              <label
-                htmlFor="playerName"
-                className="block text-sm font-medium text-gray-700"
-              >
-                このルームでの表示名
-              </label>
-              <input
-                id="playerName"
-                name="playerName"
-                type="text"
-                required
-                maxLength={50}
-                placeholder="例: 田中"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
+              {/* 表示名 */}
+              <div>
+                <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-1">
+                  あなたの表示名
+                </label>
+                <input
+                  id="playerName"
+                  name="playerName"
+                  type="text"
+                  required
+                  maxLength={50}
+                  defaultValue={user.name}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
 
-            <div className="flex gap-3">
-              <a
-                href="/rooms"
-                className="flex-1 flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-              >
-                キャンセル
-              </a>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50 transition-colors"
               >
-                {isSubmitting ? "作成中..." : "作成する"}
+                {isSubmitting ? "作成中..." : "ゲームを作成して招待コードを取得"}
               </button>
-            </div>
-          </Form>
+            </Form>
+          </div>
         )}
       </div>
     </div>
