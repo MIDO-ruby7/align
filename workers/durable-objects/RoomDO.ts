@@ -14,14 +14,22 @@ import type { RoomEvent } from "../../app/lib/room-events";
 type Session = {
   ws: WebSocket;
   userId: string;
+  sessionId: string;
 };
 
 /** 24h をミリ秒で表現 */
 const CLEANUP_DELAY_MS = 24 * 60 * 60 * 1000;
 
+/** レートリミット: 1分あたりのメッセージ数 */
+const RATE_LIMIT_MAX = 60;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+
 export class RoomDurableObject implements DurableObject {
   /** 接続中の WebSocket セッション: sessionId -> Session */
   private sessions: Map<string, Session> = new Map();
+
+  /** V-3: メッセージレートリミット: sessionId -> { count, resetAt } */
+  private messageCount: Map<string, { count: number; resetAt: number }> = new Map();
 
   constructor(
     private state: DurableObjectState,
@@ -51,27 +59,22 @@ export class RoomDurableObject implements DurableObject {
       return new Response("Expected WebSocket", { status: 426 });
     }
 
-    const userId = url.searchParams.get("userId");
+    // V-1・V-2: サーバー側で注入した検証済み userId を使用（クライアント指定の searchParams は無視）
+    const userId = request.headers.get("x-verified-user-id");
     if (!userId) {
-      return new Response("userId is required", { status: 400 });
+      return new Response("Unauthorized", { status: 401 });
     }
 
-    // ルームIDは URL パスから取得する（/ws/rooms/:roomId に対して DO の fetch が呼ばれる）
-    // DO 内では roomId を searchParams から受け取る
-    const roomId = url.searchParams.get("roomId");
+    // roomId も内部ヘッダーから取得（フォールバックとして searchParams）
+    const roomId = request.headers.get("x-room-id") ?? url.searchParams.get("roomId");
     if (!roomId) {
       return new Response("roomId is required", { status: 400 });
     }
 
-    // D1 でルームプレイヤーの所属確認
+    // V-4: WebSocket upgrade 前に非メンバーチェックを行い、403 を返す
     const isMember = await this.checkRoomMembership(roomId, userId);
     if (!isMember) {
-      // 非メンバーは WebSocket を確立してからすぐ close(4001)
-      const pair = new WebSocketPair();
-      const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
-      server.accept();
-      server.close(4001, "Unauthorized: not a room member");
-      return new Response(null, { status: 101, webSocket: client });
+      return new Response("Forbidden: not a room member", { status: 403 });
     }
 
     // WebSocket ペア作成
@@ -81,25 +84,34 @@ export class RoomDurableObject implements DurableObject {
 
     const sessionId = crypto.randomUUID();
 
-    // メッセージハンドラ（将来のクライアントメッセージ対応）
+    // メッセージハンドラ（V-3: レートリミット付き）
     server.addEventListener("message", () => {
-      // 現時点ではクライアントからのメッセージは処理しない
+      if (this.isRateLimited(sessionId)) {
+        try {
+          server.send(JSON.stringify({ type: "error", message: "Rate limit exceeded" }));
+        } catch {
+          // 送信失敗は無視
+        }
+      }
+      // 現時点ではクライアントからのメッセージはレートリミット確認のみ
     });
 
     // 切断ハンドラ
     server.addEventListener("close", () => {
       this.sessions.delete(sessionId);
+      this.messageCount.delete(sessionId);
     });
 
     server.addEventListener("error", () => {
       this.sessions.delete(sessionId);
+      this.messageCount.delete(sessionId);
     });
 
     // セッション登録
-    this.sessions.set(sessionId, { ws: server, userId });
+    this.sessions.set(sessionId, { ws: server, userId, sessionId });
 
-    // 再接続時に現在の状態を送信 (AC-5: state.snapshot)
-    const snapshot = await this.buildSnapshot(roomId);
+    // 再接続時に現在の状態を送信 (AC-5: state.snapshot、GAP-3: myHand を含む)
+    const snapshot = await this.buildSnapshot(roomId, userId);
     if (snapshot) {
       try {
         server.send(JSON.stringify(snapshot));
@@ -177,6 +189,21 @@ export class RoomDurableObject implements DurableObject {
   }
 
   /**
+   * V-3: シンプルなメッセージレートリミット（60 msg/min per sessionId）
+   */
+  private isRateLimited(sessionId: string): boolean {
+    const now = Date.now();
+    const entry = this.messageCount.get(sessionId);
+    if (!entry || now > entry.resetAt) {
+      this.messageCount.set(sessionId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+      return false;
+    }
+    if (entry.count >= RATE_LIMIT_MAX) return true;
+    entry.count++;
+    return false;
+  }
+
+  /**
    * D1 を使ってユーザーがルームメンバーかどうかを確認
    */
   private async checkRoomMembership(roomId: string, userId: string): Promise<boolean> {
@@ -194,9 +221,11 @@ export class RoomDurableObject implements DurableObject {
 
   /**
    * 現在のルーム状態を取得して state.snapshot イベントを構築
+   * GAP-3: 接続ユーザーの手札 (myHand) をスナップショットに含める
    */
   private async buildSnapshot(
     roomId: string,
+    userId: string,
   ): Promise<import("../../app/lib/room-events").StateSnapshotEvent | null> {
     try {
       const db = drizzle(this.env.DB, { schema });
@@ -211,12 +240,22 @@ export class RoomDurableObject implements DurableObject {
         orderBy: (rp, { asc }) => asc(rp.seatOrder),
       });
 
+      // 接続ユーザーの roomPlayer を特定
+      const myPlayer = players.find((p) => p.userId === userId);
+
       // deck/other の枚数（全件取得後にフィルタ）
       const allCards = await db.query.roomCards.findMany({
         where: (rc, { eq }) => eq(rc.roomId, roomId),
       });
       const deckCount = allCards.filter((c) => c.location === "deck").length;
       const otherCount = allCards.filter((c) => c.location === "other").length;
+
+      // GAP-3: 接続ユーザーの手札のみを取得
+      const myHand: string[] = myPlayer
+        ? allCards
+            .filter((c) => c.location === "hand" && c.ownerPlayerId === myPlayer.id)
+            .map((c) => c.cardId)
+        : [];
 
       // 現在のターン担当プレイヤー
       let currentPlayerId: string | null = null;
@@ -250,6 +289,7 @@ export class RoomDurableObject implements DurableObject {
         currentPlayerId,
         deckCount,
         otherCount,
+        myHand,
       };
     } catch {
       return null;

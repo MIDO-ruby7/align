@@ -46,11 +46,23 @@ export type StateSnapshotEvent = {
   currentPlayerId: string | null;
   deckCount: number;
   otherCount: number;
+  /** GAP-3: 接続ユーザー自身の手札 cardId 一覧 */
+  myHand: string[];
+};
+
+/** GAP-4: draw 操作専用イベント（ターンは進まない） */
+export type GameCardDrawnEvent = {
+  type: "game.card_drawn";
+  roomId: string;
+  playerId: string;
+  deckCount: number;
+  otherCount: number;
 };
 
 export type RoomEvent =
   | RoomUpdatedEvent
   | GameStartedEvent
   | GameTurnAdvancedEvent
+  | GameCardDrawnEvent
   | GameFinishedEvent
   | StateSnapshotEvent;

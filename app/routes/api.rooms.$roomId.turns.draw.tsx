@@ -177,8 +177,7 @@ export async function action({ request, context, params }: CloudflareActionArgs)
     createdAt: new Date(),
   });
 
-  // AC-3: draw 後にターン進行をブロードキャスト
-  const nextTurnPlayer = getCurrentTurnPlayer(seatedPlayers, completedTurns);
+  // GAP-4: draw 後は game.card_drawn をブロードキャスト（ターンはまだ進まない）
   const [afterDeckRow] = await db
     .select({ count: count() })
     .from(schema.roomCards)
@@ -199,9 +198,9 @@ export async function action({ request, context, params }: CloudflareActionArgs)
     );
   const env = (context as { cloudflare: { env: Env } }).cloudflare.env;
   await broadcastRoomEvent(env, roomId, {
-    type: "game.turn_advanced",
+    type: "game.card_drawn",
     roomId,
-    currentPlayerId: nextTurnPlayer.id,
+    playerId: currentPlayer.id,
     deckCount: afterDeckRow?.count ?? 0,
     otherCount: afterOtherRow?.count ?? 0,
   });

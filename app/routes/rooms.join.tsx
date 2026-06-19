@@ -4,6 +4,7 @@ import type { Route } from "./+types/rooms.join";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../../db/schema";
+import { broadcastRoomEvent } from "~/lib/broadcast.server";
 
 export function meta() {
   return [{ title: "ルームに参加 - Align" }];
@@ -87,13 +88,30 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   const now = new Date();
+  const newPlayerId = crypto.randomUUID();
   await db.insert(schema.roomPlayers).values({
-    id: crypto.randomUUID(),
+    id: newPlayerId,
     roomId: room.id,
     userId: user.id,
     name: playerName.trim(),
     seatOrder: currentPlayers.length + 1,
     joinedAt: now,
+  });
+
+  // GAP-2: 参加後に room.updated をブロードキャストして全クライアントに通知
+  const updatedPlayers = await db.query.roomPlayers.findMany({
+    where: (rp, { eq }) => eq(rp.roomId, room.id),
+    orderBy: (rp, { asc }) => asc(rp.seatOrder),
+  });
+  await broadcastRoomEvent(context.cloudflare.env, room.id, {
+    type: "room.updated",
+    roomId: room.id,
+    players: updatedPlayers.map((p) => ({
+      id: p.id,
+      userId: p.userId,
+      name: p.name,
+      seatOrder: p.seatOrder,
+    })),
   });
 
   throw redirect(`/rooms/${room.id}`);
