@@ -9,6 +9,7 @@ export const spaces = sqliteTable("spaces", {
   ownerUserId: text("owner_user_id")
     .notNull()
     .references(() => user.id),
+  defaultDeckSize: integer("default_deck_size").notNull().default(10),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
 
