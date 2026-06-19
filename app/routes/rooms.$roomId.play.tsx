@@ -9,7 +9,7 @@
 import { data, redirect } from "react-router";
 import { useNavigate, useFetcher } from "react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Plus, Trash2, Loader } from "lucide-react";
+import { Plus, Loader } from "lucide-react";
 import type { Route } from "./+types/rooms.$roomId.play";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -23,6 +23,7 @@ import {
   sortPlayersBySeatOrder,
 } from "~/lib/play-helpers";
 import type { RoomEvent } from "~/lib/room-events";
+import { GameCard } from "~/components/GameCard";
 
 export function meta() {
   return [{ title: `ゲーム中 - Align` }];
@@ -167,6 +168,13 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
     return map;
   });
 
+  // 直前の手札を記録して新しく引いたカードを特定
+  const prevHandRef = useRef<string[]>(initialMyHand.map((c) => c.cardId));
+  const [newlyDrawnCardId, setNewlyDrawnCardId] = useState<string | null>(null);
+
+  // discard アニメーション対象カード
+  const [discardingCardId, setDiscardingCardId] = useState<string | null>(null);
+
   // fetch 済み or fetch 中の cardId を管理（無限ループ防止）
   const fetchedCardIdsRef = useRef<Set<string>>(
     new Set(initialMyHand.map((c) => c.cardId)),
@@ -180,6 +188,18 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
         const rawData = JSON.parse(event.data as string) as RoomEvent;
         setGameState((prev) => {
           const next = applyRoomEvent(prev, rawData);
+
+          // draw イベントで新しいカードを特定
+          if (rawData.type === "game.card_drawn") {
+            const prevIds = new Set(prevHandRef.current);
+            const newIds = next.myHand.filter((id) => !prevIds.has(id));
+            if (newIds.length > 0) {
+              setNewlyDrawnCardId(newIds[0]);
+              setTimeout(() => setNewlyDrawnCardId(null), 400);
+            }
+            prevHandRef.current = next.myHand;
+          }
+
           return next;
         });
 
@@ -232,7 +252,6 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
   }, [roomId, handleMessage]);
 
   // カードテキストを fetch（手札更新時）
-  // fetchedCardIdsRef で fetch 済み/中の ID を管理し、cardTexts を依存配列から除外して無限ループを防ぐ
   useEffect(() => {
     if (gameState.myHand.length === 0) return;
 
@@ -241,10 +260,8 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
     );
     if (unknownIds.length === 0) return;
 
-    // fetch 中の ID を事前にマークして重複リクエストを防止
     unknownIds.forEach((id) => fetchedCardIdsRef.current.add(id));
 
-    // /api/rooms/:roomId/result から playing 中は自分の手札テキストを取得
     fetch(`/api/rooms/${roomId}/result`, { credentials: "include" })
       .then((res) => res.json())
       .then((responseData: unknown) => {
@@ -260,10 +277,9 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
         }
       })
       .catch(() => {
-        // エラー時は fetchedCardIds から除去して次回再試行を可能にする
         unknownIds.forEach((id) => fetchedCardIdsRef.current.delete(id));
       });
-  }, [roomId, gameState.myHand]); // cardTexts を依存配列から除外（fetchedCardIdsRef.current で代替チェック）
+  }, [roomId, gameState.myHand]);
 
   const drawFetcher = useFetcher({ key: `draw-${roomId}` });
   const discardFetcher = useFetcher({ key: `discard-${roomId}` });
@@ -285,8 +301,15 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
 
   const isDiscardMode = gameState.myHand.length >= 6;
 
+  const handleDiscard = (cardId: string) => {
+    setDiscardingCardId(cardId);
+    setTimeout(() => {
+      setDiscardingCardId(null);
+    }, 300);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 to-indigo-50">
       {/* 接続断バナー */}
       {gameState.disconnected && (
         <div className="reconnecting-banner bg-red-500 text-white text-center py-2 px-4 text-sm font-medium">
@@ -295,30 +318,30 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
       )}
 
       <div className="max-w-3xl mx-auto py-4 px-4">
-        {/* 上部: ゲーム状態 */}
-        <div className="bg-white rounded-lg shadow p-4 mb-4">
+        {/* 上部: ゲーム状態バー */}
+        <div className="bg-gradient-to-r from-indigo-500 to-violet-500 text-white rounded-xl shadow p-4 mb-4">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div>
-              <span className="text-sm text-gray-500">現在のターン</span>
-              <p className="font-bold text-lg text-indigo-700">
+              <span className="text-sm text-indigo-100">現在のターン</span>
+              <p className="font-bold text-lg">
                 {currentPlayer ? `${currentPlayer.name}さん` : "待機中"}
               </p>
             </div>
             <div className="flex gap-6">
               <div className="text-center">
-                <p className="text-xs text-gray-500">山札</p>
-                <p className="text-xl font-bold text-gray-800">
+                <p className="text-xs text-indigo-100">山札</p>
+                <p className="text-xl font-bold">
                   {gameState.deckCount}
-                  <span className="text-sm font-normal text-gray-500 ml-1">
+                  <span className="text-sm font-normal text-indigo-200 ml-1">
                     枚
                   </span>
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-xs text-gray-500">Other</p>
-                <p className="text-xl font-bold text-gray-800">
+                <p className="text-xs text-indigo-100">Other</p>
+                <p className="text-xl font-bold">
                   {gameState.otherCount}
-                  <span className="text-sm font-normal text-gray-500 ml-1">
+                  <span className="text-sm font-normal text-indigo-200 ml-1">
                     枚
                   </span>
                 </p>
@@ -327,9 +350,9 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
 
-        {/* 中央: ドロー操作（draw フェーズ） */}
+        {/* ドロー操作（draw フェーズ）: 手札の上に配置 */}
         {!isDiscardMode && (
-          <div className="bg-white rounded-lg shadow p-4 mb-4">
+          <div className="bg-white rounded-xl shadow p-4 mb-4">
             <h2 className="text-sm font-semibold text-gray-700 mb-3">
               カードを引く
             </h2>
@@ -342,14 +365,16 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                 <button
                   type="submit"
                   disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
                 >
                   {drawFetcher.state !== "idle" ? (
                     <Loader size={16} className="animate-spin" />
                   ) : (
                     <Plus size={16} />
                   )}
-                  {drawFetcher.state !== "idle" ? "引いています..." : "山札から引く"}
+                  {drawFetcher.state !== "idle"
+                    ? "引いています..."
+                    : `山札 (${gameState.deckCount}枚)`}
                 </button>
               </drawFetcher.Form>
               <drawFetcher.Form
@@ -360,14 +385,16 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                 <button
                   type="submit"
                   disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-purple-500 hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
                 >
                   {drawFetcher.state !== "idle" ? (
                     <Loader size={16} className="animate-spin" />
                   ) : (
                     <Plus size={16} />
                   )}
-                  Other から引く
+                  {drawFetcher.state !== "idle"
+                    ? "引いています..."
+                    : `Other (${gameState.otherCount}枚)`}
                 </button>
               </drawFetcher.Form>
             </div>
@@ -381,8 +408,8 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
           </div>
         )}
 
-        {/* 中央: 手札 */}
-        <div className="bg-white rounded-lg shadow p-4 mb-4">
+        {/* 手札エリア */}
+        <div className="bg-white rounded-xl shadow p-4 mb-4">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-sm font-semibold text-gray-700">
               手札 ({gameState.myHand.length} / 6)
@@ -395,52 +422,38 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
           </div>
 
           {gameState.myHand.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">
+            <p className="text-sm text-gray-400 text-center py-8">
               手札がありません
             </p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {gameState.myHand.map((cardId) => (
-                <div
-                  key={cardId}
-                  className={`relative bg-white rounded-xl border-2 shadow-sm p-4 transition-all duration-200 flex flex-col items-center justify-center min-h-[100px] ${
-                    isDiscardMode && myTurnCanDiscard
-                      ? "border-amber-400 hover:border-amber-500 hover:shadow-md"
-                      : "border-gray-200 hover:border-indigo-300 hover:shadow-md"
-                  }`}
-                >
-                  <p className="text-sm font-medium text-gray-800 text-center leading-relaxed">
-                    {cardTexts[cardId] ?? "..."}
-                  </p>
-                  {isDiscardMode && myTurnCanDiscard && (
-                    <discardFetcher.Form
-                      method="post"
-                      action={`/api/rooms/${roomId}/turns/discard`}
-                      className="mt-3 w-full"
-                    >
-                      <input type="hidden" name="cardId" value={cardId} />
-                      <button
-                        type="submit"
-                        disabled={discardFetcher.state !== "idle"}
-                        className="w-full flex items-center justify-center gap-1 py-1 px-2 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
-                      >
-                        {discardFetcher.state !== "idle" ? (
-                          <Loader size={12} className="animate-spin" />
-                        ) : (
-                          <Trash2 size={14} />
-                        )}
-                        捨てる
-                      </button>
-                    </discardFetcher.Form>
-                  )}
-                </div>
-              ))}
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+              {gameState.myHand.map((cardId, idx) => {
+                const isDiscarding = discardingCardId === cardId;
+                return (
+                  <div
+                    key={cardId}
+                    className={isDiscarding ? "animate-card-discard" : ""}
+                  >
+                    <GameCard
+                      cardId={cardId}
+                      text={cardTexts[cardId] ?? "..."}
+                      isDiscard={isDiscardMode}
+                      canDiscard={myTurnCanDiscard}
+                      onDiscard={handleDiscard}
+                      animateIn={newlyDrawnCardId === cardId}
+                      index={idx}
+                      roomId={roomId}
+                      discardFetcher={discardFetcher}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* 下部: プレイヤー一覧 */}
-        <div className="bg-white rounded-lg shadow p-4">
+        {/* プレイヤー一覧 */}
+        <div className="bg-white rounded-xl shadow p-4">
           <h2 className="text-sm font-semibold text-gray-700 mb-3">
             プレイヤー一覧
           </h2>
@@ -452,9 +465,7 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                 <div
                   key={player.id}
                   className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                    isCurrent
-                      ? "bg-indigo-50 border-l-4 border-indigo-500 font-semibold"
-                      : "bg-gray-50"
+                    isCurrent ? "bg-indigo-50" : "bg-gray-50"
                   }`}
                 >
                   <span className="text-xs text-gray-400 w-5 text-center">
@@ -463,10 +474,12 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                   <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-xs flex-shrink-0">
                     {player.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm text-gray-800 flex-1">
+                  <span
+                    className={`text-sm flex-1 ${isCurrent ? "font-bold text-indigo-700" : "text-gray-800"}`}
+                  >
                     {player.name}
                     {isMe && (
-                      <span className="ml-1 text-xs text-gray-400">
+                      <span className="ml-1 text-xs text-gray-400 font-normal">
                         （あなた）
                       </span>
                     )}

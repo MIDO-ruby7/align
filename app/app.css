@@ -13,3 +13,33 @@ body {
     color-scheme: dark;
   }
 }
+
+@keyframes cardDraw {
+  from {
+    transform: translateY(-40px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cardDiscard {
+  from {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(60px) scale(0.8) rotate(8deg);
+    opacity: 0;
+  }
+}
+
+.animate-card-draw {
+  animation: cardDraw 0.3s ease-out forwards;
+}
+
+.animate-card-discard {
+  animation: cardDiscard 0.25s ease-in forwards;
+}
