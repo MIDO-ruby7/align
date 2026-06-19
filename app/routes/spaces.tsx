@@ -3,12 +3,18 @@
 import { Outlet } from "react-router";
 import type { Route } from "./+types/spaces";
 import { requireUser } from "~/lib/session.server";
+import { Header } from "~/components/Header";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const user = await requireUser(request, context);
   return { user };
 }
 
-export default function SpacesLayout() {
-  return <Outlet />;
+export default function SpacesLayout({ loaderData }: Route.ComponentProps) {
+  return (
+    <>
+      <Header userName={loaderData?.user?.name} />
+      <Outlet />
+    </>
+  );
 }
