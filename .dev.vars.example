@@ -1,0 +1,17 @@
+# Cloudflare D1 Database
+# wrangler.toml の [[d1_databases]] に設定した database_id と一致させること
+CLOUDFLARE_D1_DATABASE_ID=00000000-0000-0000-0000-000000000000
+
+# Cloudflare Account ID
+# https://dash.cloudflare.com/ で確認できる
+CLOUDFLARE_ACCOUNT_ID=your-cloudflare-account-id
+
+# Cloudflare API Token（drizzle-kit の d1-http ドライバ用）
+CLOUDFLARE_D1_TOKEN=your-cloudflare-api-token
+
+# better-auth のシークレットキー（32文字以上のランダム文字列）
+# 生成例: openssl rand -base64 32
+BETTER_AUTH_SECRET=your-super-secret-key-change-in-production
+
+# アプリのベース URL（better-auth のコールバック URL 等に使用）
+BETTER_AUTH_URL=http://localhost:5173
