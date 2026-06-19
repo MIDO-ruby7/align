@@ -1,5 +1,6 @@
 import { redirect } from "react-router";
 import { Form, useNavigation } from "react-router";
+import { Play, Mail, Users, LayoutList, ArrowRight } from "lucide-react";
 import type { Route } from "./+types/spaces.$spaceId._index";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -148,25 +149,7 @@ export default function SpaceHub({ loaderData, actionData }: Route.ComponentProp
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ヘッダー */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/spaces" className="text-lg font-bold text-indigo-600">
-            Align
-          </a>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">{user.name}</span>
-            <a
-              href="/logout"
-              className="text-sm text-gray-500 hover:text-gray-700 border border-gray-200 px-3 py-1 rounded-md"
-            >
-              ログアウト
-            </a>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
+      <div className="max-w-2xl mx-auto py-6 px-4 space-y-6">
         {/* パンくず */}
         <div>
           <a href="/spaces" className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
@@ -236,10 +219,10 @@ export default function SpaceHub({ loaderData, actionData }: Route.ComponentProp
               className="w-full flex items-center justify-between bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 py-4 font-semibold transition-colors"
             >
               <span className="flex items-center gap-2">
-                <span className="text-xl">🃏</span>
+                <Play size={18} />
                 新しいゲームを始める
               </span>
-              <span className="text-indigo-200">→</span>
+              <ArrowRight size={18} className="text-indigo-200" />
             </a>
 
             {/* 招待コードで参加 */}
@@ -263,9 +246,9 @@ export default function SpaceHub({ loaderData, actionData }: Route.ComponentProp
                 <button
                   type="submit"
                   disabled={isJoining}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 whitespace-nowrap"
                 >
-                  {isJoining ? "参加中..." : "参加"}
+                  {isJoining ? "..." : "参加"}
                 </button>
               </Form>
               <p className="text-xs text-gray-400 mt-1">招待コードは6文字英数字</p>
@@ -285,19 +268,19 @@ export default function SpaceHub({ loaderData, actionData }: Route.ComponentProp
                   href={`/spaces/${space.id}/admin/cards`}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
                 >
-                  📝 カード管理
+                  <LayoutList size={15} /> カード管理
                 </a>
                 <a
                   href={`/spaces/${space.id}/invite`}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
                 >
-                  ✉️ メンバー招待
+                  <Mail size={15} /> メンバー招待
                 </a>
                 <a
                   href={`/spaces/${space.id}/members`}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
                 >
-                  👥 メンバー一覧
+                  <Users size={15} /> メンバー一覧
                 </a>
               </div>
             </div>
