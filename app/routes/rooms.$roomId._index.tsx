@@ -3,8 +3,9 @@ import { Form, useNavigation } from "react-router";
 import type { Route } from "./+types/rooms.$roomId._index";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import * as schema from "../../db/schema";
+import { secureShuffleSlice, distributeInitialHands, assignSeatOrders } from "~/lib/game-logic";
 
 export function meta() {
   return [{ title: `ロビー - Align` }];
@@ -85,10 +86,10 @@ export async function action({ request, context, params }: Route.ActionArgs) {
 
   // ステータスチェック
   if (room.status !== "waiting") {
-    return data({ error: "ゲームはすでに開始されています" }, { status: 400 });
+    return data({ error: "ゲームはすでに開始されています" }, { status: 409 });
   }
 
-  // プレイヤー数チェック
+  // プレイヤー取得
   const players = await db.query.roomPlayers.findMany({
     where: (rp, { eq }) => eq(rp.roomId, roomId),
   });
@@ -97,12 +98,91 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     return data({ error: "プレイヤーが1人以上必要です" }, { status: 400 });
   }
 
+  // スペースのアクティブカードを取得
+  const activeCards = await db.query.cards.findMany({
+    where: (c, { and, eq }) =>
+      and(eq(c.spaceId, room.spaceId), eq(c.isActive, true)),
+  });
+
+  if (activeCards.length === 0) {
+    return data(
+      { error: "スペースにアクティブなカードがありません" },
+      { status: 400 },
+    );
+  }
+
+  const deckSize = Math.min(room.deckSize, activeCards.length);
+
+  // セキュアシャッフルで deck_size 枚をサンプリング
+  const deckCards = secureShuffleSlice(activeCards, deckSize);
+
+  // seat_order をランダムに確定
+  const playersWithSeats = assignSeatOrders(players);
+
+  // 各プレイヤーに初期 5 枚を配布（deck から先頭を取り出す）
+  const INITIAL_HAND_SIZE = 5;
+  const handDistribution = distributeInitialHands(
+    playersWithSeats,
+    deckCards,
+    INITIAL_HAND_SIZE,
+  );
+
+  // hand に配布したカードの ID セット
+  const handCardIds = new Set(
+    Object.values(handDistribution).flat().map((c) => c.id),
+  );
+
+  // deck に残るカード（hand に配布していないもの）
+  const remainingDeckCards = deckCards.filter((c) => !handCardIds.has(c.id));
+
+  // --- DB書き込み ---
+
+  // 1. seat_order を更新
+  for (const p of playersWithSeats) {
+    await db
+      .update(schema.roomPlayers)
+      .set({ seatOrder: p.seatOrder })
+      .where(
+        and(
+          eq(schema.roomPlayers.id, p.id),
+          eq(schema.roomPlayers.roomId, roomId),
+        ),
+      );
+  }
+
+  // 2. room_cards に deck カードを投入（deck の残り）
+  if (remainingDeckCards.length > 0) {
+    await db.insert(schema.roomCards).values(
+      remainingDeckCards.map((card, idx) => ({
+        roomId,
+        cardId: card.id,
+        location: "deck" as const,
+        ownerPlayerId: null,
+        position: idx,
+      })),
+    );
+  }
+
+  // 3. 各プレイヤーの hand カードを投入
+  for (const [playerId, cards] of Object.entries(handDistribution)) {
+    if (cards.length === 0) continue;
+    await db.insert(schema.roomCards).values(
+      cards.map((card, idx) => ({
+        roomId,
+        cardId: card.id,
+        location: "hand" as const,
+        ownerPlayerId: playerId,
+        position: idx,
+      })),
+    );
+  }
+
+  // 4. rooms.status を 'playing' に更新
   await db
     .update(schema.rooms)
     .set({ status: "playing" })
     .where(eq(schema.rooms.id, roomId));
 
-  // ページをリロードしてステータスを反映
   return data({ success: true });
 }
 
@@ -240,7 +320,7 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
               ゲームが開始されました！
             </p>
             <p className="text-green-600 text-sm mt-1">
-              ゲーム機能は実装中です（T6）
+              ゲーム機能（ドロー・ディスカード）が有効です
             </p>
           </div>
         )}

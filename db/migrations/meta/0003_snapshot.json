@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d94fe172-32ce-44f8-b416-5851c8308707",
-  "prevId": "8b593bc1-57f3-422f-85f2-dde8ec3ca798",
+  "id": "6aab6ff4-ad00-499e-a6c3-bb5e312d1890",
+  "prevId": "d94fe172-32ce-44f8-b416-5851c8308707",
   "tables": {
     "cards": {
       "name": "cards",
@@ -587,7 +587,17 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "turns_room_turn_action_unique": {
+          "name": "turns_room_turn_action_unique",
+          "columns": [
+            "room_id",
+            "turn_number",
+            "action"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "turns_room_id_rooms_id_fk": {
           "name": "turns_room_id_rooms_id_fk",
