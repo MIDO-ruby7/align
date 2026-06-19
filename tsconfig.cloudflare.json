@@ -8,7 +8,8 @@
     "workers/**/*",
     "db/**/*",
     "worker-configuration.d.ts",
-    "virtual.d.ts"
+    "virtual.d.ts",
+    "env.d.ts"
   ],
   "compilerOptions": {
     "composite": true,
