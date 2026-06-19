@@ -1,4 +1,4 @@
-import { data } from "react-router";
+import { data, redirect } from "react-router";
 import { Form, useNavigation } from "react-router";
 import type { Route } from "./+types/rooms.$roomId._index";
 import { requireUser } from "~/lib/session.server";
@@ -50,6 +50,14 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
   });
 
   const isHost = room.hostUserId === user.id;
+
+  // ゲーム開始済みなら自動でゲーム画面へ
+  if (room.status === "playing") {
+    throw redirect(`/rooms/${roomId}/play`);
+  }
+  if (room.status === "finished") {
+    throw redirect(`/rooms/${roomId}/result`);
+  }
 
   return {
     user,
@@ -197,7 +205,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     handCount: INITIAL_HAND_SIZE,
   });
 
-  return data({ success: true });
+  throw redirect(`/rooms/${roomId}/play`);
 }
 
 export default function RoomLobby({ loaderData, actionData }: Route.ComponentProps) {
