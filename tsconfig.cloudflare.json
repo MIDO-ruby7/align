@@ -14,7 +14,8 @@
   "exclude": [
     "dist",
     ".wrangler",
-    "node_modules"
+    "node_modules",
+    "workers/app.production.ts"
   ],
   "compilerOptions": {
     "composite": true,
