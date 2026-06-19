@@ -138,3 +138,20 @@ export const turns = sqliteTable("turns", {
   discardedCardId: text("discarded_card_id").references(() => cards.id),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
+
+// ルーム relations
+export const roomsRelations = relations(rooms, ({ one, many }) => ({
+  space: one(spaces, {
+    fields: [rooms.spaceId],
+    references: [spaces.id],
+  }),
+  players: many(roomPlayers),
+}));
+
+// ルームプレイヤー relations
+export const roomPlayersRelations = relations(roomPlayers, ({ one }) => ({
+  room: one(rooms, {
+    fields: [roomPlayers.roomId],
+    references: [rooms.id],
+  }),
+}));
