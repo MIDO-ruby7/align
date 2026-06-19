@@ -45,7 +45,37 @@ export async function loader({ request, context, params }: CloudflareLoaderArgs)
     orderBy: (rp, { asc }) => asc(rp.seatOrder),
   });
 
-  // 各プレイヤーの手札を取得
+  const currentPlayer = players.find((p) => p.userId === user.id);
+  if (!currentPlayer) {
+    return data({ error: "このルームに参加していません" }, { status: 403 });
+  }
+
+  if (room.status === "playing") {
+    // playing 中は自分の手札のみ返す
+    const myHand = await db
+      .select({
+        cardId: schema.roomCards.cardId,
+        cardText: schema.cards.text,
+        position: schema.roomCards.position,
+      })
+      .from(schema.roomCards)
+      .innerJoin(schema.cards, eq(schema.roomCards.cardId, schema.cards.id))
+      .where(
+        and(
+          eq(schema.roomCards.roomId, roomId),
+          eq(schema.roomCards.location, "hand"),
+          eq(schema.roomCards.ownerPlayerId, currentPlayer.id),
+        ),
+      );
+
+    return data({
+      roomId,
+      status: room.status,
+      myHand,
+    });
+  }
+
+  // finished: 全員の手札を取得
   const result = await Promise.all(
     players.map(async (player) => {
       const handCards = await db

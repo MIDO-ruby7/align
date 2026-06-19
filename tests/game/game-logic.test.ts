@@ -163,19 +163,19 @@ describe("getCurrentTurnPlayer (AC-2: ターン担当計算)", () => {
 // checkGameFinished
 // ---------------------------------------------------------------------------
 describe("checkGameFinished (AC-4/5: 終了判定)", () => {
-  it("deck と other が両方空なら finished=true", () => {
-    expect(checkGameFinished({ deckCount: 0, otherCount: 0 })).toBe(true);
+  it("deck が空なら finished=true", () => {
+    expect(checkGameFinished(0)).toBe(true);
   });
 
-  it("deck が空でも other が残っていれば finished=false", () => {
-    expect(checkGameFinished({ deckCount: 0, otherCount: 3 })).toBe(false);
+  it("deck が空なら other の有無に関わらず finished=true", () => {
+    expect(checkGameFinished(0)).toBe(true);
   });
 
   it("deck が残っていれば finished=false", () => {
-    expect(checkGameFinished({ deckCount: 5, otherCount: 0 })).toBe(false);
+    expect(checkGameFinished(5)).toBe(false);
   });
 
-  it("どちらも残っていれば finished=false", () => {
-    expect(checkGameFinished({ deckCount: 5, otherCount: 3 })).toBe(false);
+  it("deck が1枚でも残っていれば finished=false", () => {
+    expect(checkGameFinished(1)).toBe(false);
   });
 });

@@ -25,4 +25,7 @@ export default [
       route(":roomId", "routes/rooms.$roomId._index.tsx"),
     ]),
   ]),
+  route("api/rooms/:roomId/turns/draw", "routes/api.rooms.$roomId.turns.draw.tsx"),
+  route("api/rooms/:roomId/turns/discard", "routes/api.rooms.$roomId.turns.discard.tsx"),
+  route("api/rooms/:roomId/result", "routes/api.rooms.$roomId.result.tsx"),
 ] satisfies RouteConfig;

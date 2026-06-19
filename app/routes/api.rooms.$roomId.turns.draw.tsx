@@ -45,6 +45,14 @@ export async function action({ request, context, params }: CloudflareActionArgs)
     return data({ error: "このルームに参加していません" }, { status: 403 });
   }
 
+  // スペースメンバーチェック
+  const membership = await db.query.spaceMembers.findFirst({
+    where: (m, { and, eq }) => and(eq(m.spaceId, room.spaceId), eq(m.userId, user.id)),
+  });
+  if (!membership) {
+    return data({ error: "Forbidden" }, { status: 403 });
+  }
+
   // 最後のターン取得 → 現在のターン番号と担当を算出
   // turns の中で action='discard' の数 = 完了したターン数
   const [discardCountRow] = await db
@@ -109,12 +117,12 @@ export async function action({ request, context, params }: CloudflareActionArgs)
   const source = body.source === "other" ? "other" : "deck";
 
   // 指定 location からカードを 1 枚取得
-  const card = await db.query.roomCards.findFirst({
+  const targetCard = await db.query.roomCards.findFirst({
     where: (rc, { and, eq }) =>
       and(eq(rc.roomId, roomId), eq(rc.location, source)),
   });
 
-  if (!card) {
+  if (!targetCard) {
     // deck が空なら other から引くことを提案
     if (source === "deck") {
       const otherCard = await db.query.roomCards.findFirst({
@@ -135,16 +143,25 @@ export async function action({ request, context, params }: CloudflareActionArgs)
     return data({ error: "引けるカードがありません" }, { status: 409 });
   }
 
-  // hand に移動
-  await db
+  // アトミックに hand に移動（WHERE に location を含めることで race condition を防ぐ）
+  const updatedCards = await db
     .update(schema.roomCards)
     .set({ location: "hand", ownerPlayerId: currentPlayer.id })
     .where(
       and(
         eq(schema.roomCards.roomId, roomId),
-        eq(schema.roomCards.cardId, card.cardId),
+        eq(schema.roomCards.cardId, targetCard.cardId),
+        eq(schema.roomCards.location, source),
       ),
-    );
+    )
+    .returning();
+
+  if (updatedCards.length === 0) {
+    // 別リクエストが先にこのカードを取得した
+    return data({ error: "Conflict - please retry" }, { status: 409 });
+  }
+
+  const card = targetCard;
 
   // turns に draw を記録
   const turnId = crypto.randomUUID();

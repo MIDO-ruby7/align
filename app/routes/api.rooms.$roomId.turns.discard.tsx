@@ -46,6 +46,14 @@ export async function action({ request, context, params }: CloudflareActionArgs)
     return data({ error: "このルームに参加していません" }, { status: 403 });
   }
 
+  // スペースメンバーチェック
+  const membership = await db.query.spaceMembers.findFirst({
+    where: (m, { and, eq }) => and(eq(m.spaceId, room.spaceId), eq(m.userId, user.id)),
+  });
+  if (!membership) {
+    return data({ error: "Forbidden" }, { status: 403 });
+  }
+
   // ターン状態確認
   const [discardCountRow] = await db
     .select({ count: count() })
@@ -164,7 +172,7 @@ export async function action({ request, context, params }: CloudflareActionArgs)
     createdAt: new Date(),
   });
 
-  // 終了判定: deck と other が空かどうか確認
+  // 終了判定: deck が空かどうか確認
   const [deckCountRow] = await db
     .select({ count: count() })
     .from(schema.roomCards)
@@ -174,20 +182,10 @@ export async function action({ request, context, params }: CloudflareActionArgs)
         eq(schema.roomCards.location, "deck"),
       ),
     );
-  const [otherCountRow] = await db
-    .select({ count: count() })
-    .from(schema.roomCards)
-    .where(
-      and(
-        eq(schema.roomCards.roomId, roomId),
-        eq(schema.roomCards.location, "other"),
-      ),
-    );
 
   const deckCount = deckCountRow?.count ?? 0;
-  const otherCount = otherCountRow?.count ?? 0;
 
-  const finished = checkGameFinished({ deckCount, otherCount });
+  const finished = checkGameFinished(deckCount);
   if (finished) {
     await db
       .update(schema.rooms)

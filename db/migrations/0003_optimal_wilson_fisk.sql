@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `turns_room_turn_action_unique` ON `turns` (`room_id`,`turn_number`,`action`);

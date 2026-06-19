@@ -78,11 +78,8 @@ export function getCurrentTurnPlayer<P extends { id: string; seatOrder: number }
 
 /**
  * ゲーム終了判定。
- * deck と other（捨て場）が両方空になったら終了。
+ * discard 後に deck が空になったら終了。
  */
-export function checkGameFinished(counts: {
-  deckCount: number;
-  otherCount: number;
-}): boolean {
-  return counts.deckCount === 0 && counts.otherCount === 0;
+export function checkGameFinished(deckCount: number): boolean {
+  return deckCount === 0;
 }

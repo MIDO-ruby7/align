@@ -177,23 +177,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     );
   }
 
-  // 4. 最初のターンを turns テーブルに記録
-  const firstPlayer = playersWithSeats.find((p) => p.seatOrder === 0);
-  if (firstPlayer) {
-    const turnId = crypto.randomUUID();
-    await db.insert(schema.turns).values({
-      id: turnId,
-      roomId,
-      playerId: firstPlayer.id,
-      turnNumber: 0,
-      action: "draw",
-      drawnCardId: null,
-      discardedCardId: null,
-      createdAt: new Date(),
-    });
-  }
-
-  // 5. rooms.status を 'playing' に更新
+  // 4. rooms.status を 'playing' に更新
   await db
     .update(schema.rooms)
     .set({ status: "playing" })
