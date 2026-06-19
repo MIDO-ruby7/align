@@ -63,11 +63,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     return data({ error: "このスペースのメンバーではありません" }, { status: 403 });
   }
 
-  // スペースのカード数を取得（デッキサイズ）
-  const cards = await db.query.cards.findMany({
-    where: (c, { and, eq }) => and(eq(c.spaceId, spaceId), eq(c.isActive, true)),
+  // スペースの defaultDeckSize を取得
+  const space = await db.query.spaces.findFirst({
+    where: (s, { eq }) => eq(s.id, spaceId),
   });
-  const deckSize = cards.length;
+  if (!space) throw new Response("Space not found", { status: 404 });
+
+  const deckSize = space.defaultDeckSize ?? 20;
 
   // 招待コードを生成（重複時はリトライ）
   let inviteCode = "";
