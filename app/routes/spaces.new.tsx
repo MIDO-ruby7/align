@@ -47,7 +47,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     joinedAt: now,
   });
 
-  // マスターカードをスペース用にコピー
+  // NOTE: master_cards が空の場合 cards は0枚になる。pnpm db:seed を先に実行すること。
   await seedSpaceCards(db, spaceId);
 
   throw redirect(`/spaces/${spaceId}`);

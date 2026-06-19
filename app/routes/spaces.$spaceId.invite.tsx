@@ -1,4 +1,4 @@
-import { redirect, data } from "react-router";
+import { data } from "react-router";
 import { Form, useNavigation } from "react-router";
 import type { Route } from "./+types/spaces.$spaceId.invite";
 import { requireUser } from "~/lib/session.server";
@@ -57,13 +57,16 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     return data({ error: "メールアドレスを入力してください" }, { status: 400 });
   }
 
+  const NEUTRAL_MESSAGE = "招待を受け付けました。該当するユーザーが登録されていれば追加されます。";
+
   // ユーザー検索
   const targetUser = await db.query.user.findFirst({
     where: (u, { eq }) => eq(u.email, email.trim().toLowerCase()),
   });
 
   if (!targetUser) {
-    return data({ error: "指定されたメールアドレスのユーザーが見つかりません" }, { status: 400 });
+    // ユーザーが存在しない場合も中立メッセージを返す（ユーザー列挙を防ぐ）
+    return data({ success: true, message: NEUTRAL_MESSAGE });
   }
 
   // 既にメンバーかチェック
@@ -73,7 +76,8 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   });
 
   if (existingMembership) {
-    return data({ error: "このユーザーは既にスペースのメンバーです" }, { status: 400 });
+    // 既にメンバーの場合も中立メッセージを返す（ユーザー列挙を防ぐ）
+    return data({ success: true, message: NEUTRAL_MESSAGE });
   }
 
   // メンバーとして追加
@@ -84,7 +88,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     joinedAt: new Date(),
   });
 
-  throw redirect(`/spaces/${spaceId}/members`);
+  return data({ success: true, message: "メンバーを追加しました。" });
 }
 
 export default function SpaceInvite({ loaderData, actionData }: Route.ComponentProps) {
@@ -113,9 +117,15 @@ export default function SpaceInvite({ loaderData, actionData }: Route.ComponentP
             既に登録済みのユーザーのみ招待できます。
           </p>
 
-          {actionData?.error && (
+          {actionData && 'error' in actionData && actionData.error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
               {actionData.error}
+            </div>
+          )}
+
+          {actionData && 'message' in actionData && actionData.message && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
+              {actionData.message}
             </div>
           )}
 
