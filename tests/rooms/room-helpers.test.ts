@@ -11,10 +11,10 @@ import { describe, it, expect } from "vitest";
 
 // 招待コード生成
 function generateInviteCode(): string {
-  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // I, O, L を除外
-  return Array.from({ length: 6 }, () =>
-    chars[Math.floor(Math.random() * chars.length)],
-  ).join("");
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // Lを除外
+  const array = new Uint32Array(6);
+  crypto.getRandomValues(array);
+  return Array.from(array, (n) => chars[n % chars.length]).join("");
 }
 
 // 招待コードバリデーション
@@ -106,7 +106,7 @@ describe("招待コード生成 (AC-1)", () => {
   });
 
   it("生成されたコードは有効な文字のみ含む", () => {
-    const chars = new Set("ABCDEFGHJKLMNPQRSTUVWXYZ23456789");
+    const chars = new Set("ABCDEFGHJKMNPQRSTUVWXYZ23456789"); // Lを除外
     for (let i = 0; i < 20; i++) {
       const code = generateInviteCode();
       for (const ch of code) {

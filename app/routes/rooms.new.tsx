@@ -28,10 +28,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 function generateInviteCode(): string {
-  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // I, O, L を除外
-  return Array.from({ length: 6 }, () =>
-    chars[Math.floor(Math.random() * chars.length)],
-  ).join("");
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // Lを除外
+  const array = new Uint32Array(6);
+  crypto.getRandomValues(array);
+  return Array.from(array, (n) => chars[n % chars.length]).join("");
 }
 
 export async function action({ request, context }: Route.ActionArgs) {

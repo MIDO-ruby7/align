@@ -40,7 +40,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   });
 
   if (!room) {
-    return data({ error: "招待コードが正しくありません" }, { status: 404 });
+    return data({ error: "招待コードが正しくないか、参加権限がありません" }, { status: 400 });
   }
 
   // スペースメンバーチェック
@@ -50,7 +50,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   });
 
   if (!membership) {
-    return data({ error: "このスペースのメンバーではありません" }, { status: 403 });
+    return data({ error: "招待コードが正しくないか、参加権限がありません" }, { status: 400 });
   }
 
   // ルームのステータスチェック
