@@ -1,0 +1,54 @@
+/**
+ * シードスクリプト: master_cards テーブルに価値観ワード 50 枚を投入する。
+ *
+ * スペース作成時に master_cards から cards テーブルへコピーする設計。
+ *
+ * 実行方法:
+ *   pnpm db:seed
+ */
+
+import { drizzle } from "drizzle-orm/d1";
+import { eq } from "drizzle-orm";
+import { masterCards, cards } from "./schema/index";
+import { MASTER_CARD_WORDS } from "./master-card-words";
+
+export { MASTER_CARD_WORDS };
+
+/**
+ * スペース作成時に master_cards を cards テーブルへコピーする。
+ * T4 実装者は `import { seedSpaceCards } from "../db/seed"` で利用可能。
+ */
+export async function seedSpaceCards(
+  db: ReturnType<typeof drizzle>,
+  spaceId: string,
+): Promise<void> {
+  const masters = await db.select().from(masterCards).where(eq(masterCards.isActive, true));
+  if (masters.length === 0) return;
+  const now = new Date().toISOString();
+  await db.insert(cards).values(
+    masters.map((m) => ({
+      id: crypto.randomUUID(),
+      spaceId,
+      text: m.text,
+      isActive: true,
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
+    })),
+  );
+}
+
+export async function seed(db: ReturnType<typeof drizzle>) {
+  const now = new Date();
+
+  const rows = MASTER_CARD_WORDS.map((word, i) => ({
+    id: `mc-${String(i + 1).padStart(3, "0")}`,
+    text: word,
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  }));
+
+  await db.insert(masterCards).values(rows).onConflictDoNothing();
+
+  console.log(`Seeded ${rows.length} master cards.`);
+}

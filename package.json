@@ -12,6 +12,7 @@
 		"postinstall": "wrangler types",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "wrangler d1 migrations apply align-db --local",
+		"db:seed": "wrangler d1 execute align-db --local --file=db/seed.sql",
 		"lint": "eslint .",
 		"format": "prettier --write .",
 		"test": "vitest run"

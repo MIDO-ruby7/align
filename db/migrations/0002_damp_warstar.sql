@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `room_players_room_id_name_unique` ON `room_players` (`room_id`,`name`);
