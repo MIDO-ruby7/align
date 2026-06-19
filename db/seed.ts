@@ -8,9 +8,14 @@
  */
 
 import { drizzle } from "drizzle-orm/d1";
+import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import { masterCards, cards } from "./schema/index";
 import { MASTER_CARD_WORDS } from "./master-card-words";
+import type * as schema from "./schema/index";
+
+// transaction コールバック内でも通常の db と同じ型を持つ
+type AnyDB = DrizzleD1Database<typeof schema> | ReturnType<typeof drizzle>;
 
 export { MASTER_CARD_WORDS };
 
@@ -19,7 +24,8 @@ export { MASTER_CARD_WORDS };
  * T4 実装者は `import { seedSpaceCards } from "../db/seed"` で利用可能。
  */
 export async function seedSpaceCards(
-  db: ReturnType<typeof drizzle>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: AnyDB | any,
   spaceId: string,
 ): Promise<void> {
   const masters = await db.select().from(masterCards).where(eq(masterCards.isActive, true));

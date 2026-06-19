@@ -33,22 +33,42 @@ export async function action({ request, context }: Route.ActionArgs) {
   const spaceId = crypto.randomUUID();
   const now = new Date();
 
-  await db.insert(schema.spaces).values({
-    id: spaceId,
-    name: name.trim(),
-    ownerUserId: user.id,
-    createdAt: now,
-  });
+  // master_cards を先に取得（クエリのみ、まだ書き込まない）
+  const { eq } = await import("drizzle-orm");
+  const masters = await db
+    .select()
+    .from(schema.masterCards)
+    .where(eq(schema.masterCards.isActive, true));
 
-  await db.insert(schema.spaceMembers).values({
-    spaceId,
-    userId: user.id,
-    role: "admin",
-    joinedAt: now,
-  });
+  const nowStr = now.toISOString();
 
-  // NOTE: master_cards が空の場合 cards は0枚になる。pnpm db:seed を先に実行すること。
-  await seedSpaceCards(db, spaceId);
+  // D1 は BEGIN/COMMIT トランザクション非対応のため batch() でアトミックに実行する。
+  // batch() 内のすべてのステートメントが成功するか、全て失敗するかのいずれかになる。
+  await db.batch([
+    db.insert(schema.spaces).values({
+      id: spaceId,
+      name: name.trim(),
+      ownerUserId: user.id,
+      createdAt: now,
+    }),
+    db.insert(schema.spaceMembers).values({
+      spaceId,
+      userId: user.id,
+      role: "admin",
+      joinedAt: now,
+    }),
+    // カードを 1 行ずつ batch に追加（D1 の 100 パラメータ制限を回避）
+    ...masters.map((m) =>
+      db.insert(schema.cards).values({
+        id: crypto.randomUUID(),
+        spaceId,
+        text: m.text,
+        isActive: true,
+        createdAt: new Date(nowStr),
+        updatedAt: new Date(nowStr),
+      })
+    ),
+  ]);
 
   throw redirect(`/spaces/${spaceId}`);
 }
