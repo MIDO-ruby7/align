@@ -9,6 +9,7 @@
 import { data, redirect } from "react-router";
 import { useNavigate, useFetcher } from "react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { Plus, Trash2, Loader } from "lucide-react";
 import type { Route } from "./+types/rooms.$roomId.play";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -341,8 +342,13 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                 <button
                   type="submit"
                   disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
-                  className="px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
+                  {drawFetcher.state !== "idle" ? (
+                    <Loader size={16} className="animate-spin" />
+                  ) : (
+                    <Plus size={16} />
+                  )}
                   {drawFetcher.state !== "idle" ? "引いています..." : "山札から引く"}
                 </button>
               </drawFetcher.Form>
@@ -354,8 +360,13 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                 <button
                   type="submit"
                   disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
-                  className="px-4 py-2 rounded-md text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
+                  {drawFetcher.state !== "idle" ? (
+                    <Loader size={16} className="animate-spin" />
+                  ) : (
+                    <Plus size={16} />
+                  )}
                   Other から引く
                 </button>
               </drawFetcher.Form>
@@ -392,28 +403,33 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
               {gameState.myHand.map((cardId) => (
                 <div
                   key={cardId}
-                  className={`relative rounded-lg border-2 p-3 transition-colors ${
+                  className={`relative bg-white rounded-xl border-2 shadow-sm p-4 transition-all duration-200 flex flex-col items-center justify-center min-h-[100px] ${
                     isDiscardMode && myTurnCanDiscard
-                      ? "border-amber-300 bg-amber-50 hover:border-amber-500 hover:bg-amber-100"
-                      : "border-gray-200 bg-white"
+                      ? "border-amber-400 hover:border-amber-500 hover:shadow-md"
+                      : "border-gray-200 hover:border-indigo-300 hover:shadow-md"
                   }`}
                 >
-                  <p className="text-sm text-gray-800 font-medium min-h-[3rem] flex items-center justify-center text-center">
-                    {cardTexts[cardId] ?? cardId}
+                  <p className="text-sm font-medium text-gray-800 text-center leading-relaxed">
+                    {cardTexts[cardId] ?? "..."}
                   </p>
                   {isDiscardMode && myTurnCanDiscard && (
                     <discardFetcher.Form
                       method="post"
                       action={`/api/rooms/${roomId}/turns/discard`}
-                      className="mt-2"
+                      className="mt-3 w-full"
                     >
                       <input type="hidden" name="cardId" value={cardId} />
                       <button
                         type="submit"
                         disabled={discardFetcher.state !== "idle"}
-                        className="w-full py-1 px-2 text-xs rounded bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-1 py-1 px-2 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
                       >
-                        {discardFetcher.state !== "idle" ? "..." : "捨てる"}
+                        {discardFetcher.state !== "idle" ? (
+                          <Loader size={12} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={14} />
+                        )}
+                        捨てる
                       </button>
                     </discardFetcher.Form>
                   )}
@@ -435,9 +451,9 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-3 p-2 rounded-lg ${
+                  className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
                     isCurrent
-                      ? "bg-indigo-50 border border-indigo-200"
+                      ? "bg-indigo-50 border-l-4 border-indigo-500 font-semibold"
                       : "bg-gray-50"
                   }`}
                 >
