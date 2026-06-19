@@ -31,7 +31,8 @@ export async function seedSpaceCards(
   const masters = await db.select().from(masterCards).where(eq(masterCards.isActive, true));
   if (masters.length === 0) return;
   const now = new Date().toISOString();
-  const rows = masters.map((m) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = masters.map((m: any) => ({
     id: crypto.randomUUID(),
     spaceId,
     text: m.text,

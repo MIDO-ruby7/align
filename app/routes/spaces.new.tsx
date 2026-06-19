@@ -4,7 +4,6 @@ import type { Route } from "./+types/spaces.new";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../../db/schema";
-import { seedSpaceCards } from "../../db/seed";
 
 export function meta() {
   return [{ title: "スペース作成 - Align" }];
