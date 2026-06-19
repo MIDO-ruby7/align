@@ -196,6 +196,17 @@ export async function action({ request, context, params }: CloudflareActionArgs)
         eq(schema.roomCards.location, "other"),
       ),
     );
+  // GAP-1: draw 後の引いたプレイヤーの手札を取得してブロードキャストに含める
+  const updatedHand = await db.query.roomCards.findMany({
+    where: (rc, { and, eq }) =>
+      and(
+        eq(rc.roomId, roomId),
+        eq(rc.ownerPlayerId, currentPlayer.id),
+        eq(rc.location, "hand"),
+      ),
+    columns: { cardId: true },
+  });
+
   const env = (context as { cloudflare: { env: Env } }).cloudflare.env;
   await broadcastRoomEvent(env, roomId, {
     type: "game.card_drawn",
@@ -203,6 +214,8 @@ export async function action({ request, context, params }: CloudflareActionArgs)
     playerId: currentPlayer.id,
     deckCount: afterDeckRow?.count ?? 0,
     otherCount: afterOtherRow?.count ?? 0,
+    forUserId: user.id,
+    myHand: updatedHand.map((rc) => rc.cardId),
   });
 
   return data({ success: true, drawnCardId: card.cardId });

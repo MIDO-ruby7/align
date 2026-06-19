@@ -68,11 +68,16 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
 
   const myPlayer = players.find((p) => p.userId === user.id);
 
+  // V-1: ルームの参加者でない場合はロビーにリダイレクト
+  if (!myPlayer) {
+    throw redirect(`/rooms/${params.roomId}`);
+  }
+
   return data({
     user,
     room,
     players,
-    myPlayerId: myPlayer?.id ?? null,
+    myPlayerId: myPlayer.id,
   });
 }
 
@@ -120,21 +125,40 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
   );
 
   useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws/rooms/${roomId}`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    let retryCount = 0;
+    let ws: WebSocket;
+    let retryTimer: ReturnType<typeof setTimeout>;
 
-    ws.onmessage = handleMessage;
-    ws.onclose = () => {
-      setGameState((prev) => ({ ...prev, disconnected: true }));
+    const connect = () => {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}/ws/rooms/${roomId}`;
+      ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      ws.onmessage = (event) => {
+        handleMessage(event);
+        setGameState((prev) => ({ ...prev, disconnected: false }));
+        retryCount = 0;
+      };
+
+      ws.onclose = () => {
+        setGameState((prev) => ({ ...prev, disconnected: true }));
+        // GAP-2: 指数バックオフで再接続（最大30秒）
+        const delay = Math.min(1000 * 2 ** retryCount, 30000);
+        retryCount++;
+        retryTimer = setTimeout(connect, delay);
+      };
+
+      ws.onerror = () => {
+        ws.close();
+      };
     };
-    ws.onerror = () => {
-      setGameState((prev) => ({ ...prev, disconnected: true }));
-    };
+
+    connect();
 
     return () => {
-      ws.close();
+      clearTimeout(retryTimer);
+      ws?.close();
     };
   }, [roomId, handleMessage]);
 
