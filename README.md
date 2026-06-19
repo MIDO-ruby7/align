@@ -39,7 +39,17 @@ pnpm db:generate
 pnpm db:migrate
 ```
 
-### 4. ローカル開発サーバーの起動
+### 4. 初期データ投入
+
+マスターカード（価値観ワード50枚）を投入します:
+
+```bash
+pnpm db:seed
+```
+
+スペース作成時にこのマスターカードが自動的にコピーされます。
+
+### 5. ローカル開発サーバーの起動
 
 ```bash
 pnpm dev
@@ -47,7 +57,7 @@ pnpm dev
 
 ブラウザで `http://localhost:5173` を開くと画面が表示されます。
 
-### 5. 型チェック・リント・テスト
+### 6. 型チェック・リント・テスト
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm test

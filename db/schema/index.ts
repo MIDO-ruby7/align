@@ -1,4 +1,6 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { relations } from "drizzle-orm";
+import { spaceMembers } from "./game";
 
 export * from "./game";
 
@@ -52,3 +54,8 @@ export const verification = sqliteTable("verification", {
   createdAt: integer("created_at", { mode: "timestamp" }),
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
+
+// user relations（spaceMembers の after に定義）
+export const userRelations = relations(user, ({ many }) => ({
+  spaceMembers: many(spaceMembers),
+}));
