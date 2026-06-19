@@ -234,6 +234,8 @@ export async function action({ request, context, params }: CloudflareActionArgs)
       currentPlayerId: nextTurnPlayer.id,
       deckCount,
       otherCount,
+      discardedCardId: cardId,
+      discardedByPlayerId: currentPlayer.id,
     });
   }
 

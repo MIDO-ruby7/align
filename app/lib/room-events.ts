@@ -30,6 +30,8 @@ export type GameTurnAdvancedEvent = {
   currentPlayerId: string;
   deckCount: number;
   otherCount: number;
+  discardedCardId?: string;
+  discardedByPlayerId?: string;
 };
 
 export type GameFinishedEvent = {

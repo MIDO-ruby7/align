@@ -2,7 +2,7 @@
  * ゲーム画面（play.tsx）で使うクライアントサイドのヘルパー関数
  */
 
-import type { RoomPlayer, RoomEvent, GameCardDrawnEvent } from "./room-events";
+import type { RoomPlayer, RoomEvent, GameCardDrawnEvent, GameTurnAdvancedEvent } from "./room-events";
 
 export type GamePhase = "draw" | "discard";
 
@@ -60,13 +60,21 @@ export function applyRoomEvent(
         // GAP-1: myHand が含まれている場合（引いたユーザー本人）のみ更新する
         myHand: "myHand" in event ? (event as GameCardDrawnEvent).myHand : state.myHand,
       };
-    case "game.turn_advanced":
+    case "game.turn_advanced": {
+      const ev = event as GameTurnAdvancedEvent;
+      const myHand =
+        ev.discardedCardId
+          ? state.myHand.filter((id) => id !== ev.discardedCardId)
+          : state.myHand;
       return {
         ...state,
-        currentPlayerId: event.currentPlayerId,
-        deckCount: event.deckCount,
-        otherCount: event.otherCount,
+        currentPlayerId: ev.currentPlayerId,
+        deckCount: ev.deckCount,
+        otherCount: ev.otherCount,
+        myHand,
+        phase: "draw",
       };
+    }
     case "game.finished":
       return {
         ...state,
