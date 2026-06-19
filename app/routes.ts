@@ -13,11 +13,14 @@ export default [
       route(":spaceId", "routes/spaces.$spaceId._index.tsx"),
       route(":spaceId/invite", "routes/spaces.$spaceId.invite.tsx"),
       route(":spaceId/members", "routes/spaces.$spaceId.members.tsx"),
-      route(":spaceId/admin/cards", "routes/spaces.$spaceId.admin.cards.tsx"),
-      route(":spaceId/admin/settings", "routes/spaces.$spaceId.admin.settings.tsx"),
     ]),
   ]),
-  layout("routes/rooms.tsx", [
-    // rooms の子ルートはここに追加
+  ...prefix("rooms", [
+    layout("routes/rooms.tsx", [
+      index("routes/rooms._index.tsx"),
+      route("new", "routes/rooms.new.tsx"),
+      route("join", "routes/rooms.join.tsx"),
+      route(":roomId", "routes/rooms.$roomId._index.tsx"),
+    ]),
   ]),
 ] satisfies RouteConfig;
