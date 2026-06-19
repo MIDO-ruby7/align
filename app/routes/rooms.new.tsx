@@ -13,6 +13,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const user = await requireUser(request, context);
   const db = drizzle(context.cloudflare.env.DB, { schema });
 
+  const url = new URL(request.url);
+  const preselectedSpaceId = url.searchParams.get("spaceId");
+
   // ユーザーが所属するスペース一覧
   const memberships = await db.query.spaceMembers.findMany({
     where: (m, { eq }) => eq(m.userId, user.id),
@@ -21,9 +24,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     },
   });
 
+  const spaces = memberships.map((m) => m.space);
+
+  // preselectedSpaceId が指定されている場合、メンバーであるか確認
+  const validPreselectedSpaceId =
+    preselectedSpaceId && spaces.some((s) => s.id === preselectedSpaceId)
+      ? preselectedSpaceId
+      : null;
+
   return {
     user,
-    spaces: memberships.map((m) => m.space),
+    spaces,
+    preselectedSpaceId: validPreselectedSpaceId,
   };
 }
 
@@ -117,9 +129,16 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function RoomsNew({ loaderData, actionData }: Route.ComponentProps) {
-  const { spaces } = loaderData;
+  const { spaces, preselectedSpaceId } = loaderData;
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
+
+  // スペースが1つのみ or クエリパラメータで指定済みの場合は自動選択
+  const autoSelectedSpaceId =
+    preselectedSpaceId ?? (spaces.length === 1 ? spaces[0]?.id : null);
+  const autoSelectedSpace = autoSelectedSpaceId
+    ? spaces.find((s) => s.id === autoSelectedSpaceId)
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -160,19 +179,28 @@ export default function RoomsNew({ loaderData, actionData }: Route.ComponentProp
               >
                 スペース
               </label>
-              <select
-                id="spaceId"
-                name="spaceId"
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">スペースを選択してください</option>
-                {spaces.map((space) => (
-                  <option key={space.id} value={space.id}>
-                    {space.name}
-                  </option>
-                ))}
-              </select>
+              {autoSelectedSpace ? (
+                <>
+                  <input type="hidden" name="spaceId" value={autoSelectedSpace.id} />
+                  <p className="mt-1 px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-800 text-sm">
+                    {autoSelectedSpace.name}
+                  </p>
+                </>
+              ) : (
+                <select
+                  id="spaceId"
+                  name="spaceId"
+                  required
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">スペースを選択してください</option>
+                  {spaces.map((space) => (
+                    <option key={space.id} value={space.id}>
+                      {space.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>

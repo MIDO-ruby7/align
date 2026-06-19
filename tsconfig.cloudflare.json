@@ -11,6 +11,11 @@
     "virtual.d.ts",
     "env.d.ts"
   ],
+  "exclude": [
+    "dist",
+    ".wrangler",
+    "node_modules"
+  ],
   "compilerOptions": {
     "composite": true,
     "strict": true,

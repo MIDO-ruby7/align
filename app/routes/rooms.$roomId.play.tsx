@@ -12,6 +12,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import type { Route } from "./+types/rooms.$roomId.play";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
+import { and, eq } from "drizzle-orm";
 import * as schema from "../../db/schema";
 import {
   applyRoomEvent,
@@ -73,20 +74,68 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     throw redirect(`/rooms/${params.roomId}`);
   }
 
+  // 自分の手札をテキスト付きで取得
+  const myHandCards = await db
+    .select({
+      cardId: schema.roomCards.cardId,
+      text: schema.cards.text,
+    })
+    .from(schema.roomCards)
+    .innerJoin(schema.cards, eq(schema.roomCards.cardId, schema.cards.id))
+    .where(
+      and(
+        eq(schema.roomCards.roomId, roomId),
+        eq(schema.roomCards.location, "hand"),
+        eq(schema.roomCards.ownerPlayerId, myPlayer.id),
+      ),
+    );
+
+  // 山札・other 枚数
+  const deckCards = await db.query.roomCards.findMany({
+    where: (rc, { and, eq }) =>
+      and(eq(rc.roomId, roomId), eq(rc.location, "deck")),
+  });
+  const otherCards = await db.query.roomCards.findMany({
+    where: (rc, { and, eq }) =>
+      and(eq(rc.roomId, roomId), eq(rc.location, "other")),
+  });
+
+  // 現在のターン担当（完了した discard ターン数から計算）
+  const allTurns = await db.query.turns.findMany({
+    where: (t, { eq }) => eq(t.roomId, roomId),
+    orderBy: (t, { asc }) => [asc(t.turnNumber)],
+  });
+  const completedTurns = allTurns.filter((t) => t.action === "discard").length;
+  const currentPlayerIndex =
+    players.length > 0 ? completedTurns % players.length : 0;
+  const currentPlayer = players[currentPlayerIndex] ?? null;
+
   return data({
     user,
     room,
     players,
     myPlayerId: myPlayer.id,
+    myHand: myHandCards.map((rc) => ({ cardId: rc.cardId, text: rc.text })),
+    deckCount: deckCards.length,
+    otherCount: otherCards.length,
+    currentPlayerId: currentPlayer?.id ?? null,
   });
 }
 
 export default function PlayPage({ loaderData }: Route.ComponentProps) {
-  const { room, players: initialPlayers, myPlayerId } = loaderData;
+  const {
+    room,
+    players: initialPlayers,
+    myPlayerId,
+    myHand: initialMyHand,
+    deckCount: initialDeckCount,
+    otherCount: initialOtherCount,
+    currentPlayerId: initialCurrentPlayerId,
+  } = loaderData;
   const roomId = room.id;
   const navigate = useNavigate();
 
-  const [gameState, setGameState] = useState(() => {
+  const [gameState, setGameState] = useState<ReturnType<typeof createInitialGameState>>(() => {
     const state = createInitialGameState();
     return {
       ...state,
@@ -96,12 +145,26 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
         name: p.name,
         seatOrder: p.seatOrder ?? null,
       })),
+      myHand: initialMyHand.map((c) => c.cardId),
+      deckCount: initialDeckCount,
+      otherCount: initialOtherCount,
+      currentPlayerId: initialCurrentPlayerId,
     };
   });
 
-  // カードIDからテキストへのマップ（state.snapshot で手札カードIDを受け取るが、
-  // テキストはローダーか別途 fetch が必要。ここでは手札 ID を表示する）
-  const [cardTexts, setCardTexts] = useState<Record<string, string>>({});
+  // カードIDからテキストへのマップ（ローダーで取得したテキストを初期値として設定）
+  const [cardTexts, setCardTexts] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const c of initialMyHand) {
+      map[c.cardId] = c.text;
+    }
+    return map;
+  });
+
+  // fetch 済み or fetch 中の cardId を管理（無限ループ防止）
+  const fetchedCardIdsRef = useRef<Set<string>>(
+    new Set(initialMyHand.map((c) => c.cardId)),
+  );
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -163,11 +226,17 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
   }, [roomId, handleMessage]);
 
   // カードテキストを fetch（手札更新時）
+  // fetchedCardIdsRef で fetch 済み/中の ID を管理し、cardTexts を依存配列から除外して無限ループを防ぐ
   useEffect(() => {
     if (gameState.myHand.length === 0) return;
 
-    const unknownIds = gameState.myHand.filter((id) => !cardTexts[id]);
+    const unknownIds = gameState.myHand.filter(
+      (id) => !fetchedCardIdsRef.current.has(id),
+    );
     if (unknownIds.length === 0) return;
+
+    // fetch 中の ID を事前にマークして重複リクエストを防止
+    unknownIds.forEach((id) => fetchedCardIdsRef.current.add(id));
 
     // /api/rooms/:roomId/result から playing 中は自分の手札テキストを取得
     fetch(`/api/rooms/${roomId}/result`, { credentials: "include" })
@@ -185,9 +254,10 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
         }
       })
       .catch(() => {
-        // fetch 失敗は無視
+        // エラー時は fetchedCardIds から除去して次回再試行を可能にする
+        unknownIds.forEach((id) => fetchedCardIdsRef.current.delete(id));
       });
-  }, [roomId, gameState.myHand, cardTexts]);
+  }, [roomId, gameState.myHand]); // cardTexts を依存配列から除外（fetchedCardIdsRef.current で代替チェック）
 
   const myTurnCanDraw = canDraw(
     gameState.currentPlayerId,

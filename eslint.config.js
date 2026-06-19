@@ -19,7 +19,9 @@ export default tseslint.config(
     ignores: [
       "node_modules/**",
       "build/**",
+      "dist/**",
       ".react-router/**",
+      ".wrangler/**",
       "worker-configuration.d.ts",
       "db/migrations/**",
     ],
