@@ -13,6 +13,8 @@ export default [
       route(":spaceId", "routes/spaces.$spaceId._index.tsx"),
       route(":spaceId/invite", "routes/spaces.$spaceId.invite.tsx"),
       route(":spaceId/members", "routes/spaces.$spaceId.members.tsx"),
+      route(":spaceId/admin/cards", "routes/spaces.$spaceId.admin.cards.tsx"),
+      route(":spaceId/admin/settings", "routes/spaces.$spaceId.admin.settings.tsx"),
     ]),
   ]),
   layout("routes/rooms.tsx", [

@@ -1,0 +1,1 @@
+ALTER TABLE `spaces` ADD `default_deck_size` integer DEFAULT 10 NOT NULL;
