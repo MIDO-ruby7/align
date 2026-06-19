@@ -1,4 +1,5 @@
 import { integer, sqliteTable, text, primaryKey, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { relations } from "drizzle-orm";
 import { user } from "./index";
 
 // スペーステーブル
@@ -10,6 +11,11 @@ export const spaces = sqliteTable("spaces", {
     .references(() => user.id),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
+
+// スペース relations
+export const spacesRelations = relations(spaces, ({ many }) => ({
+  members: many(spaceMembers),
+}));
 
 // スペースメンバーテーブル
 export const spaceMembers = sqliteTable(
@@ -26,6 +32,18 @@ export const spaceMembers = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.spaceId, t.userId] })],
 );
+
+// スペースメンバー relations
+export const spaceMembersRelations = relations(spaceMembers, ({ one }) => ({
+  space: one(spaces, {
+    fields: [spaceMembers.spaceId],
+    references: [spaces.id],
+  }),
+  user: one(user, {
+    fields: [spaceMembers.userId],
+    references: [user.id],
+  }),
+}));
 
 // マスターカードテーブル（スペース共通の雛形）
 export const masterCards = sqliteTable("master_cards", {
