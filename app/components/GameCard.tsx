@@ -1,110 +1,77 @@
 /**
- * GameCard - トランプ型縦長カードコンポーネント
+ * GameCard - 価値観カードコンポーネント
+ * ♠/♥ アイコンなし。左側の太いアクセントボーダーとグラデーション背景でデザインを表現。
  */
-import { useFetcher } from "react-router";
-import { Loader, Trash2 } from "lucide-react";
 
 interface GameCardProps {
   text: string;
-  isDiscard?: boolean; // 捨てモード
-  canDiscard?: boolean; // 捨てられるか
-  onDiscard?: (cardId: string) => void;
+  isDiscardable?: boolean; // 捨てモード（クリック可）
+  isSelected?: boolean;    // 選択中
+  onSelect?: (cardId: string) => void;
   cardId: string;
   animateIn?: boolean; // 引いた直後
   index?: number; // カラーバリエーション用
-  roomId?: string;
-  discardFetcher?: ReturnType<typeof useFetcher>;
 }
 
-const BORDER_COLORS = [
-  "border-indigo-400",
-  "border-violet-400",
-  "border-purple-400",
-  "border-fuchsia-400",
-  "border-rose-400",
-  "border-orange-400",
-  "border-amber-400",
-  "border-emerald-400",
+const accents = [
+  "border-l-indigo-500 bg-gradient-to-br from-white to-indigo-50",
+  "border-l-violet-500 bg-gradient-to-br from-white to-violet-50",
+  "border-l-fuchsia-500 bg-gradient-to-br from-white to-fuchsia-50",
+  "border-l-rose-500 bg-gradient-to-br from-white to-rose-50",
+  "border-l-amber-500 bg-gradient-to-br from-white to-amber-50",
+  "border-l-emerald-500 bg-gradient-to-br from-white to-emerald-50",
+  "border-l-sky-500 bg-gradient-to-br from-white to-sky-50",
+  "border-l-orange-500 bg-gradient-to-br from-white to-orange-50",
 ] as const;
 
 export function GameCard({
   text,
-  isDiscard = false,
-  canDiscard = false,
-  onDiscard,
+  isDiscardable = false,
+  isSelected = false,
+  onSelect,
   cardId,
   animateIn = false,
   index = 0,
-  roomId,
-  discardFetcher,
 }: GameCardProps) {
-  const colorClass = BORDER_COLORS[index % BORDER_COLORS.length];
+  const accentClass = accents[index % accents.length];
 
-  const discardMode = isDiscard && canDiscard;
+  const handleClick = () => {
+    if (isDiscardable && onSelect) {
+      onSelect(cardId);
+    }
+  };
 
   const cardClass = [
-    "relative bg-white rounded-2xl shadow-lg border-2 p-3",
-    "aspect-[3/4] flex flex-col",
-    "transition-transform duration-200",
-    colorClass,
-    discardMode
-      ? "border-red-400 hover:scale-105 cursor-pointer"
+    "relative rounded-2xl border border-gray-100 border-l-4 shadow-md",
+    accentClass,
+    "aspect-[3/4] flex flex-col items-center justify-center p-4",
+    isDiscardable
+      ? "cursor-pointer hover:shadow-xl hover:scale-[1.03] transition-all duration-200"
+      : "transition-shadow duration-200",
+    isSelected
+      ? "ring-2 ring-red-400 shadow-xl scale-[1.03]"
       : "",
     animateIn ? "animate-card-draw" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
-  const handleClick = () => {
-    if (discardMode && onDiscard) {
-      onDiscard(cardId);
-    }
-  };
-
   return (
-    <div className={cardClass} onClick={handleClick} role={discardMode ? "button" : undefined}>
-      {/* 左上コーナー */}
-      <div className="flex flex-col items-start leading-none select-none">
-        <span className="text-xs font-bold text-gray-400">♠</span>
-      </div>
+    <div
+      className={cardClass}
+      onClick={handleClick}
+      role={isDiscardable ? "button" : undefined}
+      aria-pressed={isSelected}
+    >
+      {/* カードナンバー（左上） */}
+      <span className="absolute top-2 left-3 text-xs text-gray-300 font-bold select-none">
+        {index + 1}
+      </span>
 
-      {/* 中央テキスト */}
-      <div className="flex-1 flex items-center justify-center px-1">
-        <p className="font-bold text-center text-gray-800 text-sm leading-snug break-words w-full">
-          {text}
-        </p>
-      </div>
-
-      {/* 右下コーナー */}
-      <div className="flex flex-col items-end leading-none select-none">
-        <span className="text-xs font-bold text-gray-400 rotate-180 inline-block">
-          ♥
-        </span>
-      </div>
-
-      {/* 捨てるボタン（捨てモード時） */}
-      {discardMode && roomId && discardFetcher && (
-        <discardFetcher.Form
-          method="post"
-          action={`/api/rooms/${roomId}/turns/discard`}
-          className="absolute inset-x-2 bottom-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <input type="hidden" name="cardId" value={cardId} />
-          <button
-            type="submit"
-            disabled={discardFetcher.state !== "idle"}
-            className="w-full flex items-center justify-center gap-1 py-1 px-2 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
-          >
-            {discardFetcher.state !== "idle" ? (
-              <Loader size={12} className="animate-spin" />
-            ) : (
-              <Trash2 size={14} />
-            )}
-            捨てる
-          </button>
-        </discardFetcher.Form>
-      )}
+      {/* メインテキスト */}
+      <p className="text-base font-bold text-gray-800 text-center leading-snug px-2 break-words w-full">
+        {text}
+      </p>
     </div>
   );
 }

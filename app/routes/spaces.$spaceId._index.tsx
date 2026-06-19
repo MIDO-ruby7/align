@@ -1,8 +1,10 @@
-import { Link } from "react-router";
+import { redirect } from "react-router";
+import { Form, useNavigation } from "react-router";
 import type { Route } from "./+types/spaces.$spaceId._index";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../../db/schema";
+import { broadcastRoomEvent } from "~/lib/broadcast.server";
 
 export function meta({ data }: Route.MetaArgs) {
   return [{ title: `${data?.space?.name ?? "スペース"} - Align` }];
@@ -31,81 +33,288 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  return { user, space, role: membership.role };
+  // スペース内のアクティブルームを取得（waiting または playing）
+  const activeRooms = await db.query.rooms.findMany({
+    where: (r, { and, eq, or }) =>
+      and(
+        eq(r.spaceId, spaceId),
+        or(eq(r.status, "waiting"), eq(r.status, "playing")),
+      ),
+    with: {
+      players: true,
+    },
+    limit: 5,
+  });
+
+  return { user, space, role: membership.role, activeRooms };
 }
 
-export default function SpaceHome({ loaderData }: Route.ComponentProps) {
-  const { user, space, role } = loaderData;
+export async function action({ request, context }: Route.ActionArgs) {
+  const user = await requireUser(request, context);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "join") {
+    const inviteCode = formData.get("inviteCode");
+    if (typeof inviteCode !== "string" || !inviteCode.trim()) {
+      return { error: "招待コードを入力してください" };
+    }
+
+    const db = drizzle(context.cloudflare.env.DB, { schema });
+
+    // 招待コードでルームを検索
+    const room = await db.query.rooms.findFirst({
+      where: (r, { eq }) => eq(r.inviteCode, inviteCode.trim().toUpperCase()),
+    });
+
+    if (!room) {
+      return { error: "招待コードが正しくないか、参加権限がありません" };
+    }
+
+    // スペースメンバーチェック
+    const membership = await db.query.spaceMembers.findFirst({
+      where: (m, { and, eq }) =>
+        and(eq(m.spaceId, room.spaceId), eq(m.userId, user.id)),
+    });
+
+    if (!membership) {
+      return { error: "招待コードが正しくないか、参加権限がありません" };
+    }
+
+    if (room.status !== "waiting") {
+      return { error: "このルームはすでに開始されています" };
+    }
+
+    const currentPlayers = await db.query.roomPlayers.findMany({
+      where: (rp, { eq }) => eq(rp.roomId, room.id),
+    });
+
+    if (currentPlayers.length >= 8) {
+      return { error: "ルームは最大8人までです" };
+    }
+
+    // すでに参加しているかチェック
+    const alreadyJoined = currentPlayers.some((p) => p.userId === user.id);
+    if (alreadyJoined) {
+      throw redirect(`/rooms/${room.id}`);
+    }
+
+    // 名前の重複チェック
+    const nameDuplicate = currentPlayers.some(
+      (p) => p.name.toLowerCase() === user.name.toLowerCase(),
+    );
+
+    if (nameDuplicate) {
+      return { error: "このルームで同じ名前のプレイヤーがすでに参加しています" };
+    }
+
+    const now = new Date();
+    await db.insert(schema.roomPlayers).values({
+      id: crypto.randomUUID(),
+      roomId: room.id,
+      userId: user.id,
+      name: user.name,
+      seatOrder: currentPlayers.length + 1,
+      joinedAt: now,
+    });
+
+    // 参加後にブロードキャスト
+    const updatedPlayers = await db.query.roomPlayers.findMany({
+      where: (rp, { eq }) => eq(rp.roomId, room.id),
+      orderBy: (rp, { asc }) => asc(rp.seatOrder),
+    });
+    await broadcastRoomEvent(context.cloudflare.env, room.id, {
+      type: "room.updated",
+      roomId: room.id,
+      players: updatedPlayers.map((p) => ({
+        id: p.id,
+        userId: p.userId,
+        name: p.name,
+        seatOrder: p.seatOrder,
+      })),
+    });
+
+    throw redirect(`/rooms/${room.id}`);
+  }
+
+  return { error: "不正なリクエストです" };
+}
+
+export default function SpaceHub({ loaderData, actionData }: Route.ComponentProps) {
+  const { user, space, role, activeRooms } = loaderData;
   const isAdmin = role === "admin";
+  const navigation = useNavigation();
+  const isJoining = navigation.state === "submitting";
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="mb-6">
-          <a href="/spaces" className="text-sm text-indigo-600 hover:underline">
-            &larr; スペース一覧に戻る
+      {/* ヘッダー */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <a href="/spaces" className="text-lg font-bold text-indigo-600">
+            Align
+          </a>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600">{user.name}</span>
+            <a
+              href="/logout"
+              className="text-sm text-gray-500 hover:text-gray-700 border border-gray-200 px-3 py-1 rounded-md"
+            >
+              ログアウト
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
+        {/* パンくず */}
+        <div>
+          <a href="/spaces" className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
+            &larr; スペース一覧
           </a>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex justify-between items-start">
+        {/* スペース名 */}
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900">{space.name}</h1>
+          {isAdmin && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+              管理者
+            </span>
+          )}
+        </div>
+
+        {/* アクティブなゲーム */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            アクティブなゲーム
+          </h2>
+          {activeRooms.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
+              <p className="text-gray-400 text-sm">現在進行中のゲームはありません</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {activeRooms.map((room) => (
+                <a
+                  key={room.id}
+                  href={`/rooms/${room.id}`}
+                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow block"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono font-bold text-indigo-600 tracking-widest">
+                      {room.inviteCode}
+                    </span>
+                    <span className="text-gray-400 text-sm">
+                      {room.players.length} 人参加中
+                    </span>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      room.status === "waiting"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-green-100 text-green-800"
+                    }`}
+                  >
+                    {room.status === "waiting" ? "待機中" : "プレイ中"}
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ゲームに参加 */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            ゲームに参加
+          </h2>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
+            {/* 新しいゲームを始める */}
+            <a
+              href={`/rooms/new?spaceId=${space.id}`}
+              className="w-full flex items-center justify-between bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 py-4 font-semibold transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-xl">🃏</span>
+                新しいゲームを始める
+              </span>
+              <span className="text-indigo-200">→</span>
+            </a>
+
+            {/* 招待コードで参加 */}
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{space.name}</h1>
-              <p className="text-sm text-gray-600 mt-1">
-                ログイン中: {user.name}（
-                {isAdmin ? "管理者" : "メンバー"}）
-              </p>
+              <p className="text-sm font-medium text-gray-700 mb-2">招待コードで参加</p>
+              {actionData?.error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm mb-3">
+                  {actionData.error}
+                </div>
+              )}
+              <Form method="post" className="flex gap-2">
+                <input type="hidden" name="intent" value="join" />
+                <input
+                  name="inviteCode"
+                  placeholder="ABC123"
+                  maxLength={6}
+                  required
+                  className="flex-1 uppercase tracking-widest font-mono text-center border-2 border-gray-200 rounded-lg px-3 py-3 text-lg focus:outline-none focus:border-indigo-400"
+                  style={{ textTransform: "uppercase" }}
+                />
+                <button
+                  type="submit"
+                  disabled={isJoining}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                >
+                  {isJoining ? "参加中..." : "参加"}
+                </button>
+              </Form>
+              <p className="text-xs text-gray-400 mt-1">招待コードは6文字英数字</p>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* ゲーム */}
-          <Link
-            to={`/rooms/new?spaceId=${space.id}`}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow p-6 transition-colors block"
-          >
-            <h2 className="text-lg font-semibold mb-1">🃏 ゲームを始める</h2>
-            <p className="text-sm text-indigo-100">新しいルームを作成して招待コードを発行</p>
-          </Link>
+        {/* スペース管理（adminのみ） */}
+        {isAdmin && (
+          <section>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              スペース管理
+            </h2>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href={`/spaces/${space.id}/admin/cards`}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                >
+                  📝 カード管理
+                </a>
+                <a
+                  href={`/spaces/${space.id}/invite`}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                >
+                  ✉️ メンバー招待
+                </a>
+                <a
+                  href={`/spaces/${space.id}/members`}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                >
+                  👥 メンバー一覧
+                </a>
+              </div>
+            </div>
+          </section>
+        )}
 
-          <Link
-            to="/rooms/join"
-            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
-          >
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">🔑 ゲームに参加</h2>
-            <p className="text-sm text-gray-600">招待コードを入力して参加</p>
-          </Link>
-
-          {/* 管理（admin のみ） */}
-          {isAdmin && (
-            <>
-              <Link
-                to={`/spaces/${space.id}/admin/cards`}
-                className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
-              >
-                <h2 className="text-lg font-semibold text-gray-900 mb-1">📝 カード管理</h2>
-                <p className="text-sm text-gray-600">価値観カードの追加・編集・デッキ設定</p>
-              </Link>
-
-              <Link
-                to={`/spaces/${space.id}/invite`}
-                className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
-              >
-                <h2 className="text-lg font-semibold text-gray-900 mb-1">👥 メンバーを招待</h2>
-                <p className="text-sm text-gray-600">メールアドレスで招待</p>
-              </Link>
-            </>
-          )}
-
-          <Link
-            to={`/spaces/${space.id}/members`}
-            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
-          >
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">👤 メンバー一覧</h2>
-            <p className="text-sm text-gray-600">スペースのメンバーを確認</p>
-          </Link>
-        </div>
+        {/* 非admin向けメンバー一覧リンク */}
+        {!isAdmin && (
+          <div>
+            <a
+              href={`/spaces/${space.id}/members`}
+              className="text-sm text-indigo-600 hover:underline"
+            >
+              メンバー一覧を見る →
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -9,7 +9,7 @@
 import { data, redirect } from "react-router";
 import { useNavigate, useFetcher } from "react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Plus, Loader } from "lucide-react";
+import { Plus, Loader, Trash2 } from "lucide-react";
 import type { Route } from "./+types/rooms.$roomId.play";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -172,8 +172,8 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
   const prevHandRef = useRef<string[]>(initialMyHand.map((c) => c.cardId));
   const [newlyDrawnCardId, setNewlyDrawnCardId] = useState<string | null>(null);
 
-  // discard アニメーション対象カード
-  const [discardingCardId, setDiscardingCardId] = useState<string | null>(null);
+  // 選択中のカード（捨てる候補）
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   // fetch 済み or fetch 中の cardId を管理（無限ループ防止）
   const fetchedCardIdsRef = useRef<Set<string>>(
@@ -301,12 +301,17 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
 
   const isDiscardMode = gameState.myHand.length >= 6;
 
-  const handleDiscard = (cardId: string) => {
-    setDiscardingCardId(cardId);
-    setTimeout(() => {
-      setDiscardingCardId(null);
-    }, 300);
+  const handleCardSelect = (cardId: string) => {
+    if (!isDiscardMode || !myTurnCanDiscard) return;
+    setSelectedCardId((prev) => (prev === cardId ? null : cardId));
   };
+
+  // discardFetcher の送信後は選択を解除
+  useEffect(() => {
+    if (discardFetcher.state === "idle" && discardFetcher.data) {
+      setSelectedCardId(null);
+    }
+  }, [discardFetcher.state, discardFetcher.data]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 to-indigo-50">
@@ -427,27 +432,44 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
             </p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-              {gameState.myHand.map((cardId, idx) => {
-                const isDiscarding = discardingCardId === cardId;
-                return (
-                  <div
-                    key={cardId}
-                    className={isDiscarding ? "animate-card-discard" : ""}
-                  >
-                    <GameCard
-                      cardId={cardId}
-                      text={cardTexts[cardId] ?? "..."}
-                      isDiscard={isDiscardMode}
-                      canDiscard={myTurnCanDiscard}
-                      onDiscard={handleDiscard}
-                      animateIn={newlyDrawnCardId === cardId}
-                      index={idx}
-                      roomId={roomId}
-                      discardFetcher={discardFetcher}
-                    />
-                  </div>
-                );
-              })}
+              {gameState.myHand.map((cardId, idx) => (
+                <GameCard
+                  key={cardId}
+                  cardId={cardId}
+                  text={cardTexts[cardId] ?? "..."}
+                  isDiscardable={isDiscardMode && myTurnCanDiscard}
+                  isSelected={selectedCardId === cardId}
+                  onSelect={handleCardSelect}
+                  animateIn={newlyDrawnCardId === cardId}
+                  index={idx}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* 選択中カードの捨てるボタン */}
+          {selectedCardId && isDiscardMode && myTurnCanDiscard && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <discardFetcher.Form
+                method="post"
+                action={`/api/rooms/${roomId}/turns/discard`}
+              >
+                <input type="hidden" name="cardId" value={selectedCardId} />
+                <button
+                  type="submit"
+                  disabled={discardFetcher.state !== "idle"}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  {discardFetcher.state !== "idle" ? (
+                    <Loader size={16} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={16} />
+                  )}
+                  {discardFetcher.state !== "idle"
+                    ? "捨てています..."
+                    : `「${cardTexts[selectedCardId] ?? "..."}」を捨てる`}
+                </button>
+              </discardFetcher.Form>
             </div>
           )}
         </div>
