@@ -60,27 +60,51 @@ export default function SpaceHome({ loaderData }: Route.ComponentProps) {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
+          {/* ゲーム */}
+          <Link
+            to="/rooms/new"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow p-6 transition-colors block"
+          >
+            <h2 className="text-lg font-semibold mb-1">🃏 ゲームを始める</h2>
+            <p className="text-sm text-indigo-100">新しいルームを作成して招待コードを発行</p>
+          </Link>
+
+          <Link
+            to="/rooms/join"
+            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
+          >
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">🔑 ゲームに参加</h2>
+            <p className="text-sm text-gray-600">招待コードを入力して参加</p>
+          </Link>
+
+          {/* 管理（admin のみ） */}
+          {isAdmin && (
+            <>
+              <Link
+                to={`/spaces/${space.id}/admin/cards`}
+                className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
+              >
+                <h2 className="text-lg font-semibold text-gray-900 mb-1">📝 カード管理</h2>
+                <p className="text-sm text-gray-600">価値観カードの追加・編集・デッキ設定</p>
+              </Link>
+
+              <Link
+                to={`/spaces/${space.id}/invite`}
+                className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
+              >
+                <h2 className="text-lg font-semibold text-gray-900 mb-1">👥 メンバーを招待</h2>
+                <p className="text-sm text-gray-600">メールアドレスで招待</p>
+              </Link>
+            </>
+          )}
+
           <Link
             to={`/spaces/${space.id}/members`}
             className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
           >
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">
-              メンバー管理
-            </h2>
-            <p className="text-sm text-gray-600">メンバー一覧の確認</p>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">👤 メンバー一覧</h2>
+            <p className="text-sm text-gray-600">スペースのメンバーを確認</p>
           </Link>
-
-          {isAdmin && (
-            <Link
-              to={`/spaces/${space.id}/invite`}
-              className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
-            >
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">
-                メンバーを招待
-              </h2>
-              <p className="text-sm text-gray-600">メールアドレスで招待</p>
-            </Link>
-          )}
         </div>
       </div>
     </div>
