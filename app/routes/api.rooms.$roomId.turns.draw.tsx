@@ -11,6 +11,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { and, count, eq } from "drizzle-orm";
 import * as schema from "../../db/schema";
 import { getCurrentTurnPlayer } from "~/lib/game-logic";
+import { broadcastRoomEvent } from "~/lib/broadcast.server";
 
 type CloudflareActionArgs = ActionFunctionArgs & {
   params: { roomId: string };
@@ -174,6 +175,34 @@ export async function action({ request, context, params }: CloudflareActionArgs)
     drawnCardId: card.cardId,
     discardedCardId: null,
     createdAt: new Date(),
+  });
+
+  // GAP-4: draw 後は game.card_drawn をブロードキャスト（ターンはまだ進まない）
+  const [afterDeckRow] = await db
+    .select({ count: count() })
+    .from(schema.roomCards)
+    .where(
+      and(
+        eq(schema.roomCards.roomId, roomId),
+        eq(schema.roomCards.location, "deck"),
+      ),
+    );
+  const [afterOtherRow] = await db
+    .select({ count: count() })
+    .from(schema.roomCards)
+    .where(
+      and(
+        eq(schema.roomCards.roomId, roomId),
+        eq(schema.roomCards.location, "other"),
+      ),
+    );
+  const env = (context as { cloudflare: { env: Env } }).cloudflare.env;
+  await broadcastRoomEvent(env, roomId, {
+    type: "game.card_drawn",
+    roomId,
+    playerId: currentPlayer.id,
+    deckCount: afterDeckRow?.count ?? 0,
+    otherCount: afterOtherRow?.count ?? 0,
   });
 
   return data({ success: true, drawnCardId: card.cardId });

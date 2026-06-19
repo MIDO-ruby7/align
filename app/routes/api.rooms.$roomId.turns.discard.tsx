@@ -12,6 +12,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { and, count, eq } from "drizzle-orm";
 import * as schema from "../../db/schema";
 import { getCurrentTurnPlayer, checkGameFinished } from "~/lib/game-logic";
+import { broadcastRoomEvent } from "~/lib/broadcast.server";
 
 type CloudflareActionArgs = ActionFunctionArgs & {
   params: { roomId: string };
@@ -191,6 +192,49 @@ export async function action({ request, context, params }: CloudflareActionArgs)
       .update(schema.rooms)
       .set({ status: "finished" })
       .where(eq(schema.rooms.id, roomId));
+  }
+
+  const env = (context as { cloudflare: { env: Env } }).cloudflare.env;
+
+  if (finished) {
+    // AC-3/4: game.finished をブロードキャスト（全員の hand を送信）
+    const allHandCards = await db.query.roomCards.findMany({
+      where: (rc, { and, eq }) =>
+        and(eq(rc.roomId, roomId), eq(rc.location, "hand")),
+    });
+    const hands: Record<string, string[]> = {};
+    for (const card of allHandCards) {
+      if (card.ownerPlayerId) {
+        hands[card.ownerPlayerId] ??= [];
+        hands[card.ownerPlayerId].push(card.cardId);
+      }
+    }
+    await broadcastRoomEvent(env, roomId, {
+      type: "game.finished",
+      roomId,
+      hands,
+    });
+  } else {
+    // AC-3/4: game.turn_advanced をブロードキャスト（ターン進行）
+    const [otherCountRow] = await db
+      .select({ count: count() })
+      .from(schema.roomCards)
+      .where(
+        and(
+          eq(schema.roomCards.roomId, roomId),
+          eq(schema.roomCards.location, "other"),
+        ),
+      );
+    const otherCount = otherCountRow?.count ?? 0;
+    // discard 後は次のターン（completedTurns + 1）の担当プレイヤーへ
+    const nextTurnPlayer = getCurrentTurnPlayer(seatedPlayers, completedTurns + 1);
+    await broadcastRoomEvent(env, roomId, {
+      type: "game.turn_advanced",
+      roomId,
+      currentPlayerId: nextTurnPlayer.id,
+      deckCount,
+      otherCount,
+    });
   }
 
   return data({
