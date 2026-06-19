@@ -8,6 +8,13 @@
       "when": 1781823099288,
       "tag": "0000_living_bulldozer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781827814156,
+      "tag": "0001_oval_master_chief",
+      "breakpoints": true
     }
   ]
 }

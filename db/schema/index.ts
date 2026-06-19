@@ -1,5 +1,7 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+export * from "./game";
+
 // ユーザーテーブル（better-auth が利用）
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
