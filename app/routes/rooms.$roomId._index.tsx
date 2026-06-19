@@ -6,6 +6,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { and, eq } from "drizzle-orm";
 import * as schema from "../../db/schema";
 import { secureShuffleSlice, distributeInitialHands, assignSeatOrders } from "~/lib/game-logic";
+import { broadcastRoomEvent } from "~/lib/broadcast.server";
 
 export function meta() {
   return [{ title: `ロビー - Align` }];
@@ -182,6 +183,19 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     .update(schema.rooms)
     .set({ status: "playing" })
     .where(eq(schema.rooms.id, roomId));
+
+  // AC-3: ゲーム開始を全クライアントにブロードキャスト
+  const seatOrderInfo = playersWithSeats.map((p) => ({
+    playerId: p.id,
+    seatOrder: p.seatOrder,
+  }));
+  await broadcastRoomEvent(context.cloudflare.env, roomId, {
+    type: "game.started",
+    roomId,
+    seatOrder: seatOrderInfo,
+    deckCount: remainingDeckCards.length,
+    handCount: INITIAL_HAND_SIZE,
+  });
 
   return data({ success: true });
 }
