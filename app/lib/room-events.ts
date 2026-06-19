@@ -57,6 +57,8 @@ export type GameCardDrawnEvent = {
   playerId: string;
   deckCount: number;
   otherCount: number;
+  forUserId: string;  // 手札を更新すべきユーザー（better-auth userId）
+  myHand: string[];   // forUserId の手札（card_id 配列）
 };
 
 export type RoomEvent =

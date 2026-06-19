@@ -9,7 +9,7 @@
 
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../../db/schema/index";
-import type { RoomEvent } from "../../app/lib/room-events";
+import type { RoomEvent, GameCardDrawnEvent } from "../../app/lib/room-events";
 
 type Session = {
   ws: WebSocket;
@@ -169,15 +169,29 @@ export class RoomDurableObject implements DurableObject {
   // ---------------------------------------------------------------------------
 
   /**
-   * 全接続クライアントにイベントをブロードキャスト
+   * 全接続クライアントにイベントをブロードキャスト。
+   * GAP-1: game.card_drawn は forUserId に一致するセッションにのみ myHand を含めて送る。
+   *        他のセッションには myHand・forUserId を除いたパブリックイベントを送る。
    */
   broadcast(event: RoomEvent): void {
-    const message = JSON.stringify(event);
     const deadSessions: string[] = [];
 
     this.sessions.forEach((session, sessionId) => {
       try {
-        session.ws.send(message);
+        if (event.type === "game.card_drawn" && "forUserId" in event) {
+          const cardDrawnEvent = event as GameCardDrawnEvent;
+          if (session.userId === cardDrawnEvent.forUserId) {
+            // 引いたユーザーにのみ myHand を含む完全なイベントを送る
+            session.ws.send(JSON.stringify(cardDrawnEvent));
+          } else {
+            // 他のユーザーには myHand・forUserId を除いたイベントを送る
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { myHand, forUserId, ...publicEvent } = cardDrawnEvent;
+            session.ws.send(JSON.stringify(publicEvent));
+          }
+        } else {
+          session.ws.send(JSON.stringify(event));
+        }
       } catch {
         // 送信失敗 = 切断済みセッション
         deadSessions.push(sessionId);
