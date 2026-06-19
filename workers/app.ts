@@ -18,3 +18,10 @@ export default {
     return requestHandler(request, { cloudflare: { env, ctx } });
   },
 } satisfies ExportedHandler<Env>;
+
+export class RoomDurableObject {
+  constructor(private state: DurableObjectState, private env: Env) {}
+  async fetch(): Promise<Response> {
+    return new Response("RoomDurableObject stub", { status: 200 });
+  }
+}
