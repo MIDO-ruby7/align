@@ -1,5 +1,5 @@
 import { redirect, data } from "react-router";
-import { Form, useNavigation } from "react-router";
+import { Form, useNavigation, Link } from "react-router";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -214,9 +214,9 @@ export default function Register({ actionData }: Route.ComponentProps) {
 
         <p className="text-center text-sm text-gray-600 mt-6">
           すでにアカウントをお持ちの方は{" "}
-          <a href="/login" className="text-indigo-600 hover:underline">
+          <Link to="/login" className="text-indigo-600 hover:underline">
             ログイン
-          </a>
+          </Link>
         </p>
       </div>
     </div>

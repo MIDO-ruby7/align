@@ -1,4 +1,5 @@
 import { redirect } from "react-router";
+import { Link } from "react-router";
 import { getOptionalUser } from "~/lib/session.server";
 import { Users, Shuffle, Heart, LayoutDashboard } from "lucide-react";
 import type { Route } from "./+types/home";
@@ -31,18 +32,18 @@ export default function Home() {
           チームで価値観カードを選び、互いの大切にしているものを共有しましょう。
         </p>
         <div className="flex flex-col gap-3">
-          <a
-            href="/register"
-            className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-sm"
+          <Link
+            to="/register"
+            className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-sm text-center"
           >
             新規登録
-          </a>
-          <a
-            href="/login"
-            className="block w-full border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-semibold py-3 px-6 rounded-lg transition-colors"
+          </Link>
+          <Link
+            to="/login"
+            className="block w-full border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-semibold py-3 px-6 rounded-lg transition-colors text-center"
           >
             ログイン
-          </a>
+          </Link>
         </div>
 
         <div className="mt-12 grid grid-cols-3 gap-4 text-center">

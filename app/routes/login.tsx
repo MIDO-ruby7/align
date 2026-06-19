@@ -1,5 +1,5 @@
 import { redirect, data } from "react-router";
-import { Form, useNavigation } from "react-router";
+import { Form, useNavigation, Link } from "react-router";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -21,7 +21,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = createAuth(context.cloudflare.env);
   const session = await auth.api.getSession({ headers: request.headers });
   if (session) {
-    throw redirect("/");
+    throw redirect("/spaces");
   }
   return null;
 }
@@ -62,7 +62,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (setCookie) {
       headers.set("set-cookie", setCookie);
     }
-    headers.set("location", "/");
+    headers.set("location", "/spaces");
     return new Response(null, { status: 302, headers });
   } catch {
     // パスワードは絶対にログに出さない
@@ -172,9 +172,9 @@ export default function Login({ actionData }: Route.ComponentProps) {
 
         <p className="text-center text-sm text-gray-600 mt-6">
           アカウントをお持ちでない方は{" "}
-          <a href="/register" className="text-indigo-600 hover:underline">
+          <Link to="/register" className="text-indigo-600 hover:underline">
             新規登録
-          </a>
+          </Link>
         </p>
       </div>
     </div>
