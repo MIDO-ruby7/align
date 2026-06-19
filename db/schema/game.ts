@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text, primaryKey } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, primaryKey, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { user } from "./index";
 
 // スペーステーブル
@@ -66,16 +66,22 @@ export const rooms = sqliteTable("rooms", {
 });
 
 // ルームプレイヤーテーブル
-export const roomPlayers = sqliteTable("room_players", {
-  id: text("id").primaryKey(),
-  roomId: text("room_id")
-    .notNull()
-    .references(() => rooms.id),
-  userId: text("user_id").references(() => user.id),
-  name: text("name").notNull(),
-  seatOrder: integer("seat_order"),
-  joinedAt: integer("joined_at", { mode: "timestamp" }).notNull(),
-});
+export const roomPlayers = sqliteTable(
+  "room_players",
+  {
+    id: text("id").primaryKey(),
+    roomId: text("room_id")
+      .notNull()
+      .references(() => rooms.id),
+    userId: text("user_id").references(() => user.id),
+    name: text("name").notNull(),
+    seatOrder: integer("seat_order"),
+    joinedAt: integer("joined_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => ({
+    roomNameUnique: uniqueIndex("room_players_room_id_name_unique").on(table.roomId, table.name),
+  }),
+);
 
 // ルームカードテーブル
 export const roomCards = sqliteTable(
@@ -106,7 +112,9 @@ export const turns = sqliteTable("turns", {
     .notNull()
     .references(() => roomPlayers.id),
   turnNumber: integer("turn_number").notNull(),
-  action: text("action").notNull(),
+  action: text("action", { enum: ["draw", "discard"] }).notNull(),
+  // NOTE: drawn_card_id / discarded_card_id は cards.id への参照。
+  // T6 アプリ層で「そのカードが当該ルームの room_cards に存在すること」を必ず検証すること。
   drawnCardId: text("drawn_card_id").references(() => cards.id),
   discardedCardId: text("discarded_card_id").references(() => cards.id),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),

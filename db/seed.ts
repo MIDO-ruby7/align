@@ -8,10 +8,34 @@
  */
 
 import { drizzle } from "drizzle-orm/d1";
-import { masterCards } from "./schema/index";
+import { eq } from "drizzle-orm";
+import { masterCards, cards } from "./schema/index";
 import { MASTER_CARD_WORDS } from "./master-card-words";
 
 export { MASTER_CARD_WORDS };
+
+/**
+ * スペース作成時に master_cards を cards テーブルへコピーする。
+ * T4 実装者は `import { seedSpaceCards } from "../db/seed"` で利用可能。
+ */
+export async function seedSpaceCards(
+  db: ReturnType<typeof drizzle>,
+  spaceId: string,
+): Promise<void> {
+  const masters = await db.select().from(masterCards).where(eq(masterCards.isActive, true));
+  if (masters.length === 0) return;
+  const now = new Date().toISOString();
+  await db.insert(cards).values(
+    masters.map((m) => ({
+      id: crypto.randomUUID(),
+      spaceId,
+      text: m.text,
+      isActive: true,
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
+    })),
+  );
+}
 
 export async function seed(db: ReturnType<typeof drizzle>) {
   const now = new Date();
