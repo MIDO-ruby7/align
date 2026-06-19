@@ -44,39 +44,37 @@ export async function action({ request, context }: Route.ActionArgs) {
   const auth = createAuth(context.cloudflare.env);
 
   try {
-    const result = await auth.api.signUpEmail({
+    // GAP-3: signUpEmail を asResponse: true で一度だけ呼び、
+    // そのレスポンスの Set-Cookie をそのままコピーしてリダイレクトする。
+    // signInEmail を二重に呼ぶゾンビセッションを防ぐ。
+    const response = await auth.api.signUpEmail({
       body: {
         name: name.trim(),
         email: email.trim(),
         password,
       },
-    });
-
-    if (!result) {
-      return data({ error: "登録に失敗しました" }, { status: 500 });
-    }
-
-    // 登録成功後にセッションクッキーを取得してリダイレクト
-    const loginResult = await auth.api.signInEmail({
-      body: { email: email.trim(), password },
       asResponse: true,
     });
 
-    const setCookie = loginResult.headers.get("set-cookie");
-    const headers = new Headers();
-    if (setCookie) {
-      headers.set("set-cookie", setCookie);
+    if (!response.ok) {
+      // V-2: アカウント列挙を防ぐため、既登録かどうかに関わらず統一メッセージを返す。
+      return data(
+        { error: "登録できませんでした。入力内容をご確認ください" },
+        { status: 400 },
+      );
     }
-    headers.set("location", "/");
+
+    // Set-Cookie ヘッダーをコピーしてリダイレクト
+    const headers = new Headers(response.headers);
+    headers.set("Location", "/spaces");
     return new Response(null, { status: 302, headers });
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "登録に失敗しました";
+  } catch {
     // パスワードは絶対にログに出さない
-    const safeMessage = message.includes("already")
-      ? "このメールアドレスは既に登録されています"
-      : "登録に失敗しました。もう一度お試しください";
-    return data({ error: safeMessage }, { status: 400 });
+    // V-2: エラー種別を外部に漏らさない統一メッセージ
+    return data(
+      { error: "登録できませんでした。入力内容をご確認ください" },
+      { status: 400 },
+    );
   }
 }
 
