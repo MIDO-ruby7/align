@@ -25,16 +25,20 @@ export async function seedSpaceCards(
   const masters = await db.select().from(masterCards).where(eq(masterCards.isActive, true));
   if (masters.length === 0) return;
   const now = new Date().toISOString();
-  await db.insert(cards).values(
-    masters.map((m) => ({
-      id: crypto.randomUUID(),
-      spaceId,
-      text: m.text,
-      isActive: true,
-      createdAt: new Date(now),
-      updatedAt: new Date(now),
-    })),
-  );
+  const rows = masters.map((m) => ({
+    id: crypto.randomUUID(),
+    spaceId,
+    text: m.text,
+    isActive: true,
+    createdAt: new Date(now),
+    updatedAt: new Date(now),
+  }));
+  // D1 は 1 クエリあたり最大 100 パラメータ制限があるため
+  // 6 カラム × 15 行 = 90 パラメータ以内でバッチ処理する
+  const BATCH_SIZE = 15;
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    await db.insert(cards).values(rows.slice(i, i + BATCH_SIZE));
+  }
 }
 
 export async function seed(db: ReturnType<typeof drizzle>) {
