@@ -86,14 +86,21 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   if (intent === "create") {
     // 新規作成（AC-2）
     const text = formData.get("text");
-    if (typeof text !== "string" || !text.trim()) {
-      return data({ error: "カードテキストを入力してください" }, { status: 400 });
+    if (typeof text !== "string") {
+      return data({ error: "カードのテキストを入力してください" }, { status: 400 });
+    }
+    const trimmedText = text.trim();
+    if (trimmedText.length === 0) {
+      return data({ error: "カードのテキストを入力してください" }, { status: 400 });
+    }
+    if (trimmedText.length > 200) {
+      return data({ error: "カードのテキストは200文字以内にしてください" }, { status: 400 });
     }
     const now = new Date();
     await db.insert(schema.cards).values({
       id: crypto.randomUUID(),
       spaceId,
-      text: text.trim(),
+      text: trimmedText,
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -105,8 +112,15 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // 編集（AC-2）
     const cardId = formData.get("cardId");
     const text = formData.get("text");
-    if (typeof cardId !== "string" || typeof text !== "string" || !text.trim()) {
+    if (typeof cardId !== "string" || typeof text !== "string") {
       return data({ error: "不正なリクエストです" }, { status: 400 });
+    }
+    const trimmedText = text.trim();
+    if (trimmedText.length === 0) {
+      return data({ error: "カードのテキストを入力してください" }, { status: 400 });
+    }
+    if (trimmedText.length > 200) {
+      return data({ error: "カードのテキストは200文字以内にしてください" }, { status: 400 });
     }
     // クロスアクセス防止: そのカードが当スペースに属することを確認
     const card = await db.query.cards.findFirst({
@@ -117,7 +131,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     }
     await db
       .update(schema.cards)
-      .set({ text: text.trim(), updatedAt: new Date() })
+      .set({ text: trimmedText, updatedAt: new Date() })
       .where(and(eq(schema.cards.id, cardId), eq(schema.cards.spaceId, spaceId)));
     return redirect(`/spaces/${spaceId}/admin/cards`);
   }
@@ -211,6 +225,7 @@ export default function AdminCards({ loaderData, actionData }: Route.ComponentPr
               name="text"
               placeholder="カードテキストを入力"
               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              maxLength={200}
               required
             />
             <button
@@ -380,6 +395,7 @@ function EditableText({ card }: { card: Card }) {
         name="text"
         defaultValue={card.text}
         className="flex-1 text-sm text-gray-900 border border-transparent rounded px-2 py-1 hover:border-gray-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        maxLength={200}
       />
       <button
         type="submit"
