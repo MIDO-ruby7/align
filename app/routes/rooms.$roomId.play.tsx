@@ -161,6 +161,11 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
     return map;
   });
 
+  // fetch 済み or fetch 中の cardId を管理（無限ループ防止）
+  const fetchedCardIdsRef = useRef<Set<string>>(
+    new Set(initialMyHand.map((c) => c.cardId)),
+  );
+
   const wsRef = useRef<WebSocket | null>(null);
 
   const handleMessage = useCallback(
@@ -221,11 +226,17 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
   }, [roomId, handleMessage]);
 
   // カードテキストを fetch（手札更新時）
+  // fetchedCardIdsRef で fetch 済み/中の ID を管理し、cardTexts を依存配列から除外して無限ループを防ぐ
   useEffect(() => {
     if (gameState.myHand.length === 0) return;
 
-    const unknownIds = gameState.myHand.filter((id) => !cardTexts[id]);
+    const unknownIds = gameState.myHand.filter(
+      (id) => !fetchedCardIdsRef.current.has(id),
+    );
     if (unknownIds.length === 0) return;
+
+    // fetch 中の ID を事前にマークして重複リクエストを防止
+    unknownIds.forEach((id) => fetchedCardIdsRef.current.add(id));
 
     // /api/rooms/:roomId/result から playing 中は自分の手札テキストを取得
     fetch(`/api/rooms/${roomId}/result`, { credentials: "include" })
@@ -243,9 +254,10 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
         }
       })
       .catch(() => {
-        // fetch 失敗は無視
+        // エラー時は fetchedCardIds から除去して次回再試行を可能にする
+        unknownIds.forEach((id) => fetchedCardIdsRef.current.delete(id));
       });
-  }, [roomId, gameState.myHand, cardTexts]);
+  }, [roomId, gameState.myHand]); // cardTexts を依存配列から除外（fetchedCardIdsRef.current で代替チェック）
 
   const myTurnCanDraw = canDraw(
     gameState.currentPlayerId,
