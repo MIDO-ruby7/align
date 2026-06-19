@@ -62,7 +62,7 @@ export default function SpaceHome({ loaderData }: Route.ComponentProps) {
         <div className="grid gap-4 sm:grid-cols-2">
           {/* ゲーム */}
           <Link
-            to="/rooms/new"
+            to={`/rooms/new?spaceId=${space.id}`}
             className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow p-6 transition-colors block"
           >
             <h2 className="text-lg font-semibold mb-1">🃏 ゲームを始める</h2>
