@@ -7,7 +7,7 @@
  * AC-5: レスポンシブ対応
  */
 import { data, redirect } from "react-router";
-import { Form, useNavigate } from "react-router";
+import { useNavigate, useFetcher } from "react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { Route } from "./+types/rooms.$roomId.play";
 import { requireUser } from "~/lib/session.server";
@@ -25,6 +25,11 @@ import type { RoomEvent } from "~/lib/room-events";
 
 export function meta() {
   return [{ title: `ゲーム中 - Align` }];
+}
+
+// draw/discard は useFetcher で送信するため再検証不要（WebSocket が状態を管理）
+export function shouldRevalidate() {
+  return false;
 }
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
@@ -259,6 +264,9 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
       });
   }, [roomId, gameState.myHand]); // cardTexts を依存配列から除外（fetchedCardIdsRef.current で代替チェック）
 
+  const drawFetcher = useFetcher({ key: `draw-${roomId}` });
+  const discardFetcher = useFetcher({ key: `discard-${roomId}` });
+
   const myTurnCanDraw = canDraw(
     gameState.currentPlayerId,
     myPlayerId,
@@ -325,32 +333,32 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
               カードを引く
             </h2>
             <div className="flex gap-3 flex-wrap">
-              <Form
+              <drawFetcher.Form
                 method="post"
                 action={`/api/rooms/${roomId}/turns/draw`}
               >
                 <input type="hidden" name="source" value="deck" />
                 <button
                   type="submit"
-                  disabled={!myTurnCanDraw}
+                  disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
                   className="px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  山札から引く
+                  {drawFetcher.state !== "idle" ? "引いています..." : "山札から引く"}
                 </button>
-              </Form>
-              <Form
+              </drawFetcher.Form>
+              <drawFetcher.Form
                 method="post"
                 action={`/api/rooms/${roomId}/turns/draw`}
               >
                 <input type="hidden" name="source" value="other" />
                 <button
                   type="submit"
-                  disabled={!myTurnCanDraw}
+                  disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
                   className="px-4 py-2 rounded-md text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Other から引く
                 </button>
-              </Form>
+              </drawFetcher.Form>
             </div>
             {!myTurnCanDraw && (
               <p className="text-xs text-gray-400 mt-2">
@@ -394,7 +402,7 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                     {cardTexts[cardId] ?? cardId}
                   </p>
                   {isDiscardMode && myTurnCanDiscard && (
-                    <Form
+                    <discardFetcher.Form
                       method="post"
                       action={`/api/rooms/${roomId}/turns/discard`}
                       className="mt-2"
@@ -402,11 +410,12 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                       <input type="hidden" name="cardId" value={cardId} />
                       <button
                         type="submit"
-                        className="w-full py-1 px-2 text-xs rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
+                        disabled={discardFetcher.state !== "idle"}
+                        className="w-full py-1 px-2 text-xs rounded bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
                       >
-                        捨てる
+                        {discardFetcher.state !== "idle" ? "..." : "捨てる"}
                       </button>
-                    </Form>
+                    </discardFetcher.Form>
                   )}
                 </div>
               ))}
