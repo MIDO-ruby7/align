@@ -23,6 +23,8 @@ export default [
       route("new", "routes/rooms.new.tsx"),
       route("join", "routes/rooms.join.tsx"),
       route(":roomId", "routes/rooms.$roomId._index.tsx"),
+      route(":roomId/play", "routes/rooms.$roomId.play.tsx"),
+      route(":roomId/result", "routes/rooms.$roomId.result.tsx"),
     ]),
   ]),
   route("api/rooms/:roomId/turns/draw", "routes/api.rooms.$roomId.turns.draw.tsx"),
