@@ -50,9 +50,10 @@ new_sqlite_classes = ["RoomDurableObject"]
 [env.production]
 name = "align-production"
 main = "./workers/app.production.ts"
+assets = { directory = "./dist/client", binding = "ASSETS" }
 
 [env.production.vars]
-BETTER_AUTH_URL = "https://align.pages.dev"
+BETTER_AUTH_URL = "https://align-production.mintgreen7programming.workers.dev"
 
 [[env.production.d1_databases]]
 binding = "DB"
