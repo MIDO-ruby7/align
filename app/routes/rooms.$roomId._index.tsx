@@ -1,5 +1,6 @@
 import { data, redirect } from "react-router";
 import { Form, useNavigation } from "react-router";
+import { useState } from "react";
 import type { Route } from "./+types/rooms.$roomId._index";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -211,6 +212,7 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
   const { user, room, players, hostUser, isHost } = loaderData;
   const navigation = useNavigation();
   const isStarting = navigation.state === "submitting";
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   const statusLabel =
     room.status === "waiting"
@@ -227,7 +229,10 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
         : "bg-gray-100 text-gray-800";
 
   const handleCopyInviteCode = () => {
-    navigator.clipboard.writeText(room.inviteCode).catch(() => {});
+    navigator.clipboard?.writeText(room.inviteCode).then(() => {
+      setInviteCopied(true);
+      setTimeout(() => setInviteCopied(false), 2000);
+    }).catch(() => {});
   };
 
   return (
@@ -281,9 +286,13 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
             <button
               type="button"
               onClick={handleCopyInviteCode}
-              className="ml-4 px-3 py-2 bg-white border border-indigo-200 rounded-lg text-sm text-indigo-600 font-medium hover:bg-indigo-50 transition-colors"
+              className={`ml-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                inviteCopied
+                  ? "bg-green-100 text-green-700 border border-green-200"
+                  : "bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50"
+              }`}
             >
-              コピー
+              {inviteCopied ? "✓ コピー済み" : "コピー"}
             </button>
           </div>
 
@@ -354,6 +363,18 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
                 {isStarting ? "開始中..." : "ゲームを開始する"}
               </button>
             </Form>
+          </div>
+        )}
+
+        {/* 非ホスト待機案内 */}
+        {!isHost && room.status === "waiting" && (
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 text-center">
+            <p className="text-sm text-indigo-700 font-medium">
+              ホスト（{hostUser?.name ?? "ホスト"}さん）がゲームを開始するまでお待ちください
+            </p>
+            <p className="text-xs text-indigo-400 mt-1">
+              ゲームが始まると自動的に移動します
+            </p>
           </div>
         )}
 

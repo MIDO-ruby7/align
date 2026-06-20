@@ -5,6 +5,7 @@
  * AC-5: レスポンシブ対応
  */
 import { data, redirect } from "react-router";
+import { useState } from "react";
 import type { Route } from "./+types/rooms.$roomId.result";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -93,32 +94,31 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
 
 export default function ResultPage({ loaderData }: Route.ComponentProps) {
   const { room, players, shareUrl } = loaderData;
+  const [copied, setCopied] = useState(false);
 
   const handleShare = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl).catch(() => {
-        // clipboard 失敗時は無視
-      });
-    }
+    navigator.clipboard?.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto py-8 px-4">
         {/* ヘッダー */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            ゲーム終了！
-          </h1>
-          <p className="text-gray-600 text-sm">
-            {room.space?.name ?? "Align"} - 最終結果
+        <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl text-white text-center py-8 px-6 mb-8 shadow-lg">
+          <p className="text-4xl mb-2">🎉</p>
+          <h1 className="text-2xl font-bold mb-1">ゲーム終了！</h1>
+          <p className="text-indigo-100 text-sm mb-5">
+            {room.space?.name ?? "Align"} — みんなの価値観が揃いました
           </p>
           <button
             type="button"
             onClick={handleShare}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/20 hover:bg-white/30 transition-colors border border-white/30"
           >
-            結果 URL をコピー
+            {copied ? "コピーしました！" : "結果 URL をコピー"}
           </button>
         </div>
 
@@ -178,13 +178,19 @@ export default function ResultPage({ loaderData }: Route.ComponentProps) {
           ))}
         </div>
 
-        {/* ロビーへのリンク */}
-        <div className="text-center mt-10">
+        {/* フッターリンク */}
+        <div className="text-center mt-10 flex flex-col sm:flex-row gap-3 justify-center">
           <a
-            href="/rooms"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            href={`/spaces/${room.spaceId}`}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
           >
-            ルーム一覧に戻る
+            スペースハブへ戻る
+          </a>
+          <a
+            href="/spaces"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+          >
+            スペース一覧
           </a>
         </div>
       </div>
