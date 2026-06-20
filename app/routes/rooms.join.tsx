@@ -186,6 +186,25 @@ export default function RoomsJoin({ loaderData, actionData }: Route.ComponentPro
             </button>
           </Form>
         </div>
+
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mt-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">ゲームの流れ</h3>
+          <ol className="space-y-3">
+            {[
+              { step: "1", text: "招待コードを入力" },
+              { step: "2", text: "ゲームに参加" },
+              { step: "3", text: "カードを選ぶ" },
+              { step: "4", text: "価値観を共有" },
+            ].map(({ step, text }) => (
+              <li key={step} className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">
+                  {step}
+                </span>
+                <span className="text-sm text-gray-600 mt-0.5">{text}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
     </div>
   );

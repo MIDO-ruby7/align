@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { ChevronRight } from "lucide-react";
 import type { Route } from "./+types/spaces._index";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -63,11 +64,14 @@ export default function SpacesIndex({ loaderData }: Route.ComponentProps) {
               <Link
                 key={space.id}
                 to={`/spaces/${space.id}`}
-                className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
+                className="group bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
               >
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                  {space.name}
-                </h2>
+                <div className="flex items-start justify-between mb-2">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {space.name}
+                  </h2>
+                  <ChevronRight size={18} className="flex-shrink-0 mt-0.5 text-gray-300 group-hover:text-indigo-500 transition-colors" />
+                </div>
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     space.role === "admin"

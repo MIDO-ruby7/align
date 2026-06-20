@@ -343,7 +343,7 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-xs text-indigo-100">Other</p>
+                <p className="text-xs text-indigo-100">捨て札</p>
                 <p className="text-xl font-bold">
                   {gameState.otherCount}
                   <span className="text-sm font-normal text-indigo-200 ml-1">
@@ -354,6 +354,21 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
             </div>
           </div>
         </div>
+
+        {/* discard モード全幅バナー */}
+        {isDiscardMode && myTurnCanDiscard && (
+          <div className="bg-amber-400 text-amber-900 rounded-xl px-4 py-3 mb-4 flex items-center gap-2 font-semibold text-sm">
+            <span>⚠️</span>
+            手札が6枚です。捨てるカードを1枚タップしてください
+          </div>
+        )}
+
+        {/* 相手ターン待機案内 */}
+        {!myTurnCanDraw && gameState.currentPlayerId !== myPlayerId && (
+          <div className="bg-gray-50 rounded-xl px-4 py-3 mb-4 text-sm text-gray-500 text-center">
+            <span className="font-medium text-gray-700">{currentPlayer?.name ?? "?"}さん</span> のターンです。お待ちください
+          </div>
+        )}
 
         {/* ドロー操作（draw フェーズ）: 手札の上に配置 */}
         {!isDiscardMode && (
@@ -399,7 +414,7 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
                   )}
                   {drawFetcher.state !== "idle"
                     ? "引いています..."
-                    : `Other (${gameState.otherCount}枚)`}
+                    : `捨て札から引く (${gameState.otherCount}枚)`}
                 </button>
               </drawFetcher.Form>
             </div>
@@ -419,11 +434,6 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
             <h2 className="text-sm font-semibold text-gray-700">
               手札 ({gameState.myHand.length} / 6)
             </h2>
-            {isDiscardMode && (
-              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
-                捨てるカードを選んでください
-              </span>
-            )}
           </div>
 
           {gameState.myHand.length === 0 ? (
@@ -431,7 +441,7 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
               手札がありません
             </p>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {gameState.myHand.map((cardId, idx) => (
                 <GameCard
                   key={cardId}

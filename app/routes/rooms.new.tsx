@@ -186,6 +186,7 @@ export default function RoomsNew({ loaderData, actionData }: Route.ComponentProp
             </a>
           </div>
         ) : (
+          <>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
             <Form method="post" className="space-y-4">
               {/* スペース選択 */}
@@ -237,6 +238,26 @@ export default function RoomsNew({ loaderData, actionData }: Route.ComponentProp
               </button>
             </Form>
           </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mt-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">ゲームの流れ</h3>
+            <ol className="space-y-3">
+              {[
+                { step: "1", text: "招待コードをチームメンバーに共有" },
+                { step: "2", text: "全員が参加したらゲーム開始" },
+                { step: "3", text: "順番に価値観カードを引いて5枚を選ぶ" },
+                { step: "4", text: "互いの選択を見ながら話し合う" },
+              ].map(({ step, text }) => (
+                <li key={step} className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">
+                    {step}
+                  </span>
+                  <span className="text-sm text-gray-600 mt-0.5">{text}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          </>
         )}
       </div>
     </div>

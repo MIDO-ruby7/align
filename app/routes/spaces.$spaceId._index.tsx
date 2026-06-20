@@ -142,7 +142,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function SpaceHub({ loaderData, actionData }: Route.ComponentProps) {
-  const { user, space, role, activeRooms } = loaderData;
+  const { space, role, activeRooms } = loaderData;
   const isAdmin = role === "admin";
   const navigation = useNavigation();
   const isJoining = navigation.state === "submitting";
