@@ -39,18 +39,22 @@ export function GameCard({
   return (
     <div
       className={[
-        // ベーススタイル
-        "relative rounded-xl bg-white border border-gray-200 overflow-hidden",
-        "aspect-[3/4] flex flex-col select-none",
-        // シャドウ（リアルなカード感）
-        "shadow-[0_2px_8px_rgba(0,0,0,0.10)]",
-        // 状態別スタイル
+        // ベーススタイル（縦比を 2/3 に短縮しカード感を強化）
+        "relative rounded-xl overflow-hidden",
+        "aspect-[2/3] flex flex-col select-none",
+        // 捨てモードと通常で背景・ボーダーを変える
         isDiscardable && !isDiscarding
-          ? "cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.16)] hover:-translate-y-1 hover:border-gray-300 transition-all duration-150 active:scale-[0.97]"
-          : "transition-all duration-150",
+          ? "bg-amber-50 border-2 border-amber-400 cursor-pointer"
+          : "bg-white border border-gray-200",
+        // シャドウ
+        isDiscardable && !isDiscarding
+          ? "shadow-[0_8px_24px_rgba(0,0,0,0.14)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.20)] hover:-translate-y-1.5 hover:scale-[1.02] active:scale-[0.97]"
+          : "shadow-[0_2px_8px_rgba(0,0,0,0.10)]",
+        // 共通トランジション
+        "transition-all duration-150",
         // アニメーション
         animateIn ? "animate-card-draw" : "",
-        isDiscarding ? "opacity-50 animate-card-discard" : "",
+        isDiscarding ? "opacity-40 animate-card-discard pointer-events-none" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -65,21 +69,24 @@ export function GameCard({
       role={isDiscardable ? "button" : undefined}
       aria-label={isDiscardable ? `${text} を捨てる` : undefined}
     >
-      {/* 上辺アクセントバー */}
-      <div className={`h-[3px] w-full flex-shrink-0 ${accentBar}`} />
+      {/* 上辺アクセントバー（太め 6px で視認性向上） */}
+      <div className={`h-1.5 w-full flex-shrink-0 ${accentBar}`} />
 
       {/* テキストエリア */}
       <div className="flex-1 flex items-center justify-center px-3 py-2">
-        <p className="text-sm font-bold text-gray-800 text-center leading-snug break-words w-full">
+        <p className={[
+          "font-bold text-center leading-snug break-words w-full",
+          isDiscardable ? "text-base text-gray-800" : "text-base text-gray-800",
+        ].join(" ")}>
           {text || "…"}
         </p>
       </div>
 
       {/* 下部: 捨てるヒント（捨てモード時のみ） */}
       {isDiscardable && (
-        <div className="pb-2 flex justify-center">
-          <span className="text-[10px] font-semibold text-gray-300 tracking-wide">
-            {isDiscarding ? "..." : "タップして捨てる"}
+        <div className="pb-2.5 flex justify-center">
+          <span className="text-xs font-semibold text-amber-600 tracking-wide">
+            {isDiscarding ? "捨て中…" : "タップして捨てる"}
           </span>
         </div>
       )}
