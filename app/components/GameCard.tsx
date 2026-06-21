@@ -1,77 +1,88 @@
 /**
- * GameCard - 価値観カードコンポーネント
- * ♠/♥ アイコンなし。左側の太いアクセントボーダーとグラデーション背景でデザインを表現。
+ * GameCard - 価値観カードコンポーネント v2
+ * 白背景固定、上辺カラーアクセントバー（8色サイクル）、リアルなカード感
  */
+import { useFetcher } from "react-router";
 
-interface GameCardProps {
-  text: string;
-  isDiscardable?: boolean; // 捨てモード（クリック可）
-  isSelected?: boolean;    // 選択中
-  onSelect?: (cardId: string) => void;
-  cardId: string;
-  animateIn?: boolean; // 引いた直後
-  index?: number; // カラーバリエーション用
-}
-
-const accents = [
-  "border-l-indigo-500 bg-gradient-to-br from-white to-indigo-50",
-  "border-l-violet-500 bg-gradient-to-br from-white to-violet-50",
-  "border-l-fuchsia-500 bg-gradient-to-br from-white to-fuchsia-50",
-  "border-l-rose-500 bg-gradient-to-br from-white to-rose-50",
-  "border-l-amber-500 bg-gradient-to-br from-white to-amber-50",
-  "border-l-emerald-500 bg-gradient-to-br from-white to-emerald-50",
-  "border-l-sky-500 bg-gradient-to-br from-white to-sky-50",
-  "border-l-orange-500 bg-gradient-to-br from-white to-orange-50",
+const accentBars = [
+  "bg-indigo-500",
+  "bg-violet-500",
+  "bg-purple-500",
+  "bg-fuchsia-500",
+  "bg-sky-500",
+  "bg-teal-500",
+  "bg-amber-500",
+  "bg-rose-500",
 ] as const;
 
+interface GameCardProps {
+  cardId: string;
+  text: string;
+  index: number;
+  animateIn?: boolean;
+  isDiscardable?: boolean; // 捨てモード（自分のターンかつ手札6枚）
+  roomId?: string; // discard 時に必要
+}
+
 export function GameCard({
-  text,
-  isDiscardable = false,
-  isSelected = false,
-  onSelect,
   cardId,
-  animateIn = false,
-  index = 0,
+  text,
+  index,
+  animateIn,
+  isDiscardable,
+  roomId,
 }: GameCardProps) {
-  const accentClass = accents[index % accents.length];
-
-  const handleClick = () => {
-    if (isDiscardable && onSelect) {
-      onSelect(cardId);
-    }
-  };
-
-  const cardClass = [
-    "relative rounded-2xl border border-gray-100 border-l-4 shadow-md",
-    accentClass,
-    "aspect-[3/4] flex flex-col items-center justify-center p-4",
-    isDiscardable
-      ? "cursor-pointer hover:shadow-xl hover:scale-[1.03] transition-all duration-200"
-      : "transition-shadow duration-200",
-    isSelected
-      ? "ring-2 ring-red-400 shadow-xl scale-[1.03]"
-      : "",
-    animateIn ? "animate-card-draw" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const discardFetcher = useFetcher({ key: `discard-card-${cardId}` });
+  const isDiscarding = discardFetcher.state !== "idle";
+  const accentBar = accentBars[index % accentBars.length];
 
   return (
     <div
-      className={cardClass}
-      onClick={handleClick}
+      className={[
+        // ベーススタイル
+        "relative rounded-xl bg-white border border-gray-200 overflow-hidden",
+        "aspect-[3/4] flex flex-col select-none",
+        // シャドウ（リアルなカード感）
+        "shadow-[0_2px_8px_rgba(0,0,0,0.10)]",
+        // 状態別スタイル
+        isDiscardable && !isDiscarding
+          ? "cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.16)] hover:-translate-y-1 hover:border-gray-300 transition-all duration-150 active:scale-[0.97]"
+          : "transition-all duration-150",
+        // アニメーション
+        animateIn ? "animate-card-draw" : "",
+        isDiscarding ? "opacity-50 animate-card-discard" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      onClick={() => {
+        if (isDiscardable && !isDiscarding && roomId) {
+          discardFetcher.submit(
+            { cardId },
+            { method: "post", action: `/api/rooms/${roomId}/turns/discard` },
+          );
+        }
+      }}
       role={isDiscardable ? "button" : undefined}
-      aria-pressed={isSelected}
+      aria-label={isDiscardable ? `${text} を捨てる` : undefined}
     >
-      {/* カードナンバー（左上） */}
-      <span className="absolute top-2 left-3 text-xs text-gray-300 font-bold select-none">
-        {index + 1}
-      </span>
+      {/* 上辺アクセントバー */}
+      <div className={`h-[3px] w-full flex-shrink-0 ${accentBar}`} />
 
-      {/* メインテキスト */}
-      <p className="text-base font-bold text-gray-800 text-center leading-snug px-2 break-words w-full">
-        {text}
-      </p>
+      {/* テキストエリア */}
+      <div className="flex-1 flex items-center justify-center px-3 py-2">
+        <p className="text-sm font-bold text-gray-800 text-center leading-snug break-words w-full">
+          {text || "…"}
+        </p>
+      </div>
+
+      {/* 下部: 捨てるヒント（捨てモード時のみ） */}
+      {isDiscardable && (
+        <div className="pb-2 flex justify-center">
+          <span className="text-[10px] font-semibold text-gray-300 tracking-wide">
+            {isDiscarding ? "..." : "タップして捨てる"}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
