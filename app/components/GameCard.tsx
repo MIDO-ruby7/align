@@ -44,14 +44,12 @@ export function GameCard({
         "aspect-[2/3] flex flex-col select-none",
         // 捨てモードと通常で背景・ボーダーを変える
         isDiscardable && !isDiscarding
-          ? "bg-amber-50 border-2 border-amber-400 cursor-pointer"
+          ? "bg-amber-50 border-2 border-amber-400 cursor-pointer game-card-discardable"
           : "bg-white border border-gray-200",
         // シャドウ
         isDiscardable && !isDiscarding
-          ? "shadow-[0_8px_24px_rgba(0,0,0,0.14)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.20)] hover:-translate-y-1.5 hover:scale-[1.02] active:scale-[0.97]"
+          ? "shadow-[0_8px_24px_rgba(0,0,0,0.14)]"
           : "shadow-[0_2px_8px_rgba(0,0,0,0.10)]",
-        // 共通トランジション
-        "transition-all duration-150",
         // アニメーション
         animateIn ? "animate-card-draw" : "",
         isDiscarding ? "opacity-40 animate-card-discard pointer-events-none" : "",

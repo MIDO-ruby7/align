@@ -9,7 +9,6 @@
 import { data, redirect } from "react-router";
 import { useNavigate, useFetcher } from "react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Plus, Loader } from "lucide-react";
 import type { Route } from "./+types/rooms.$roomId.play";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -24,6 +23,7 @@ import {
 } from "~/lib/play-helpers";
 import type { RoomEvent } from "~/lib/room-events";
 import { GameCard } from "~/components/GameCard";
+import { DeckCard } from "~/components/DeckCard";
 
 export function meta() {
   return [{ title: `ゲーム中 - Align` }];
@@ -347,67 +347,58 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
           </div>
         )}
 
-        {/* 相手ターン待機案内 */}
-        {!myTurnCanDraw && gameState.currentPlayerId !== myPlayerId && (
-          <div className="bg-gray-50 rounded-xl px-4 py-3 mb-4 text-sm text-gray-500 text-center">
-            <span className="font-medium text-gray-700">{currentPlayer?.name ?? "?"}さん</span> のターンです。お待ちください
-          </div>
-        )}
-
         {/* ドロー操作（draw フェーズ）: 手札の上に配置 */}
         {!isDiscardMode && (
-          <div className="bg-white rounded-xl shadow p-4 mb-4">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">
+          <div className="mb-6">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-5 text-center">
               カードを引く
             </h2>
-            <div className="flex gap-3 flex-wrap">
-              <drawFetcher.Form
-                method="post"
-                action={`/api/rooms/${roomId}/turns/draw`}
-              >
-                <input type="hidden" name="source" value="deck" />
-                <button
-                  type="submit"
-                  disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+            <div className="flex justify-center items-end gap-10">
+              {/* 山札 */}
+              <div className="flex flex-col items-center gap-2">
+                <drawFetcher.Form
+                  method="post"
+                  action={`/api/rooms/${roomId}/turns/draw`}
                 >
-                  {drawFetcher.state !== "idle" ? (
-                    <Loader size={16} className="animate-spin" />
-                  ) : (
-                    <Plus size={16} />
-                  )}
-                  {drawFetcher.state !== "idle"
-                    ? "引いています..."
-                    : `山札 (${gameState.deckCount}枚)`}
-                </button>
-              </drawFetcher.Form>
-              <drawFetcher.Form
-                method="post"
-                action={`/api/rooms/${roomId}/turns/draw`}
-              >
-                <input type="hidden" name="source" value="other" />
-                <button
-                  type="submit"
-                  disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-purple-500 hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
-                >
-                  {drawFetcher.state !== "idle" ? (
-                    <Loader size={16} className="animate-spin" />
-                  ) : (
-                    <Plus size={16} />
-                  )}
-                  {drawFetcher.state !== "idle"
-                    ? "引いています..."
-                    : `捨て札から引く (${gameState.otherCount}枚)`}
-                </button>
-              </drawFetcher.Form>
+                  <input type="hidden" name="source" value="deck" />
+                  <DeckCard
+                    count={gameState.deckCount}
+                    label="山札"
+                    source="deck"
+                    disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
+                    isLoading={drawFetcher.state !== "idle"}
+                  />
+                </drawFetcher.Form>
+              </div>
+
+              {/* 捨て札（0枚のときは非表示） */}
+              {gameState.otherCount > 0 && (
+                <div className="flex flex-col items-center gap-2">
+                  <drawFetcher.Form
+                    method="post"
+                    action={`/api/rooms/${roomId}/turns/draw`}
+                  >
+                    <input type="hidden" name="source" value="other" />
+                    <DeckCard
+                      count={gameState.otherCount}
+                      label="捨て札"
+                      source="other"
+                      disabled={!myTurnCanDraw || drawFetcher.state !== "idle"}
+                      isLoading={drawFetcher.state !== "idle"}
+                    />
+                  </drawFetcher.Form>
+                </div>
+              )}
             </div>
-            {!myTurnCanDraw && (
-              <p className="text-xs text-gray-400 mt-2">
-                {gameState.currentPlayerId === myPlayerId
-                  ? "手札が6枚になったら捨てるカードを選んでください"
-                  : "相手のターンです"}
-              </p>
+
+            {/* 待機メッセージ */}
+            {!myTurnCanDraw && gameState.currentPlayerId !== myPlayerId && (
+              <div className="bg-gray-50 rounded-xl px-4 py-3 mt-5 text-sm text-gray-500 text-center">
+                <span className="font-medium text-gray-700">
+                  {currentPlayer?.name ?? "?"}さん
+                </span>{" "}
+                のターンです。お待ちください
+              </div>
             )}
           </div>
         )}
