@@ -418,19 +418,36 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
               手札がありません
             </p>
           ) : (
-            <div className="grid grid-cols-2 gap-3 p-1 md:flex md:flex-row md:gap-3 md:justify-center md:items-end md:flex-wrap">
-              {gameState.myHand.map((cardId, idx) => (
-                <GameCard
-                  key={cardId}
-                  cardId={cardId}
-                  text={cardTexts[cardId] ?? "..."}
-                  isDiscardable={isDiscardMode && myTurnCanDiscard}
-                  animateIn={newlyDrawnCardId === cardId}
-                  index={idx}
-                  roomId={roomId}
-                />
-              ))}
-            </div>
+            <>
+              {/* モバイル: 2列グリッド */}
+              <div className="md:hidden grid grid-cols-2 gap-3 p-1">
+                {gameState.myHand.map((cardId, idx) => (
+                  <GameCard
+                    key={cardId + "-mobile"}
+                    cardId={cardId}
+                    text={cardTexts[cardId] ?? "..."}
+                    isDiscardable={isDiscardMode && myTurnCanDiscard}
+                    animateIn={newlyDrawnCardId === cardId}
+                    index={idx}
+                    roomId={roomId}
+                  />
+                ))}
+              </div>
+              {/* PC: 横一列カードゲーム風 */}
+              <div className="hidden md:flex flex-row gap-3 justify-center items-end">
+                {gameState.myHand.map((cardId, idx) => (
+                  <GameCard
+                    key={cardId + "-desktop"}
+                    cardId={cardId}
+                    text={cardTexts[cardId] ?? "..."}
+                    isDiscardable={isDiscardMode && myTurnCanDiscard}
+                    animateIn={newlyDrawnCardId === cardId}
+                    index={idx}
+                    roomId={roomId}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
 
