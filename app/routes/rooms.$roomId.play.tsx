@@ -314,46 +314,19 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
       )}
 
       <div className="max-w-3xl mx-auto py-4 px-4">
-        {/* 上部: ゲーム状態バー */}
-        <div className="bg-white border-2 border-[#1a1c1b] rounded-xl neo-shadow p-4 mb-4">
-          <div className="flex flex-wrap gap-3 items-center justify-between">
-            {/* ターン */}
-            <div className="flex items-center gap-2">
-              <div className="bg-[#f9f9f7] border-2 border-[#1a1c1b] rounded-xl px-3 py-1.5">
-                <p className="text-[10px] font-bold text-[#1a1c1b]/50 uppercase tracking-widest">TURN</p>
-                <p
-                  className="font-black text-xl text-[#1a1c1b] leading-none"
-                  style={{ fontFamily: "Quicksand" }}
-                >
-                  {turnNumber}
-                </p>
-              </div>
-              <div className="text-sm font-bold text-[#1a1c1b]">
-                {currentPlayer ? `${currentPlayer.name}さん` : "待機中"}
-              </div>
-            </div>
-
-            {/* 山札・捨て札カウント */}
-            <div className="flex gap-3">
-              <div className="bg-[#9cf5be]/40 border-2 border-[#1a1c1b] rounded-xl px-3 py-1.5 text-center">
-                <p className="text-[10px] font-bold text-[#1a1c1b]/50 uppercase tracking-widest">DECK</p>
-                <p
-                  className="font-black text-xl text-[#1a1c1b] leading-none"
-                  style={{ fontFamily: "Quicksand" }}
-                >
-                  {gameState.deckCount}
-                </p>
-              </div>
-              <div className="bg-[#ff71ce]/20 border-2 border-[#1a1c1b] rounded-xl px-3 py-1.5 text-center">
-                <p className="text-[10px] font-bold text-[#1a1c1b]/50 uppercase tracking-widest">DISCARD</p>
-                <p
-                  className="font-black text-xl text-[#1a1c1b] leading-none"
-                  style={{ fontFamily: "Quicksand" }}
-                >
-                  {gameState.otherCount}
-                </p>
-              </div>
-            </div>
+        {/* 上部: ゲーム状態バー — Claude Design 3バッジスタイル */}
+        <div className="flex gap-2 mb-4">
+          <div className="flex-1 bg-[#f9f9f7] border-2 border-[#1a1c1b] rounded-2xl px-2 py-2.5 text-center neo-shadow">
+            <p className="text-[9px] font-bold text-[#1a1c1b]/40 uppercase tracking-widest">TURN</p>
+            <p className="font-black text-2xl text-[#1a1c1b] leading-none" style={{ fontFamily: "Quicksand" }}>{turnNumber}</p>
+          </div>
+          <div className="flex-1 bg-[#ff71ce]/20 border-2 border-[#1a1c1b] rounded-2xl px-2 py-2.5 text-center neo-shadow">
+            <p className="text-[9px] font-bold text-[#1a1c1b]/40 uppercase tracking-widest">DECK</p>
+            <p className="font-black text-2xl text-[#1a1c1b] leading-none" style={{ fontFamily: "Quicksand" }}>{gameState.deckCount}</p>
+          </div>
+          <div className="flex-1 bg-[#e7e482]/50 border-2 border-[#1a1c1b] rounded-2xl px-2 py-2.5 text-center neo-shadow">
+            <p className="text-[9px] font-bold text-[#1a1c1b]/40 uppercase tracking-widest">DISCARD</p>
+            <p className="font-black text-2xl text-[#1a1c1b] leading-none" style={{ fontFamily: "Quicksand" }}>{gameState.otherCount}</p>
           </div>
         </div>
 
@@ -425,7 +398,7 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
         )}
 
         {/* 手札エリア */}
-        <div className="bg-white border-2 border-[#1a1c1b] rounded-xl neo-shadow p-4 mb-4">
+        <div className="flex gap-2 mb-4">
           <div className="flex justify-between items-center mb-3">
             <h2
               className="text-sm font-bold text-[#1a1c1b]"

@@ -34,7 +34,7 @@ export function DeckCard({
       aria-label={`${label}から引く (${count}枚)`}
       className={[
         "relative group block",
-        "w-24",
+        "w-32",
         "deck-card-hover",
         isDeck && !isDisabled ? "animate-deck-pulse" : "",
         isDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
@@ -49,39 +49,26 @@ export function DeckCard({
 
       {/* 表面カード */}
       {isDeck ? (
-        // 山札: ミントグリーン + 雲模様
+        // 山札: 実際のカード裏面画像を使用
         <div
           className="relative rounded-2xl overflow-hidden border-4 border-[#1a1c1b] mb-[6px] mr-[6px]"
-          style={{
-            aspectRatio: "2/3",
-            background: "#9cf5be",
-            backgroundImage: cloudPattern,
-            backgroundSize: "60px 40px",
-          }}
+          style={{ aspectRatio: "2/3" }}
         >
-          {/* 中央ロゴ */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span
-              className="text-5xl font-black text-white/70"
-              style={{ fontFamily: "Quicksand" }}
-            >
-              A
+          {/* カード裏面画像 */}
+          <img
+            src="/card-back.png"
+            alt="山札"
+            className="w-full h-full object-cover"
+          />
+          {/* "DRAW" ラベル */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="bg-white/90 text-[#1a1c1b] text-xs font-black px-3 py-1 rounded-full border-2 border-[#1a1c1b] tracking-widest">
+              {isLoading ? "..." : `DRAW`}
             </span>
           </div>
-
           {/* 枚数 */}
-          <div className="absolute bottom-2 left-0 right-0 text-center">
-            {isLoading ? (
-              <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin mx-auto" />
-            ) : (
-              <span
-                className="text-white font-black text-2xl"
-                style={{ fontFamily: "Quicksand" }}
-              >
-                {count}
-              </span>
-            )}
-            <p className="text-white/60 text-xs">枚</p>
+          <div className="absolute bottom-1 left-0 right-0 text-center">
+            <span className="text-white text-xs font-bold drop-shadow">{count}枚</span>
           </div>
         </div>
       ) : (
