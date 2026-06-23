@@ -141,122 +141,138 @@ export default function RoomsNew({ loaderData, actionData }: Route.ComponentProp
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f9f9f7]">
       <div className="max-w-lg mx-auto px-4 py-8">
         {/* 戻るリンク */}
         {autoSelectedSpace ? (
           <a
             href={`/spaces/${autoSelectedSpace.id}`}
-            className="text-indigo-600 text-sm flex items-center gap-1 mb-6 hover:underline"
+            className="text-[#880069] text-sm flex items-center gap-1 mb-6 hover:underline font-medium"
           >
             &larr; {autoSelectedSpace.name} に戻る
           </a>
         ) : (
           <a
             href="/spaces"
-            className="text-indigo-600 text-sm flex items-center gap-1 mb-6 hover:underline"
+            className="text-[#880069] text-sm flex items-center gap-1 mb-6 hover:underline font-medium"
           >
             &larr; スペース一覧に戻る
           </a>
         )}
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">新しいゲームを作成</h1>
+        <h1
+          className="text-2xl font-bold text-[#1a1c1b] mb-1"
+          style={{ fontFamily: "Quicksand" }}
+        >
+          新しいゲームを作成
+        </h1>
         {autoSelectedSpace && (
-          <p className="text-gray-500 text-sm mb-6">
+          <p className="text-[#1a1c1b]/50 text-sm mb-6">
             {autoSelectedSpace.name} のメンバーを招待できます
           </p>
         )}
 
         {actionData?.error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+          <div className="bg-red-50 border-2 border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4">
             {actionData.error}
           </div>
         )}
 
         {spaces.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
-            <p className="text-gray-500 mb-4">
+          <div className="bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow-lg p-6 text-center">
+            <p className="text-[#1a1c1b]/60 mb-4">
               ルームを作成するにはスペースへの参加が必要です
             </p>
             <a
               href="/spaces"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+              className="inline-flex items-center px-5 py-2.5 bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-full font-bold text-[#1a1c1b] text-sm neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all"
             >
               スペース一覧へ
             </a>
           </div>
         ) : (
           <>
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <Form method="post" className="space-y-4">
-              {/* スペース選択 */}
-              {autoSelectedSpace ? (
-                <input type="hidden" name="spaceId" value={autoSelectedSpace.id} />
-              ) : (
+            <div className="bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow-lg p-6">
+              <Form method="post" className="space-y-4">
+                {/* スペース選択 */}
+                {autoSelectedSpace ? (
+                  <input type="hidden" name="spaceId" value={autoSelectedSpace.id} />
+                ) : (
+                  <div>
+                    <label
+                      htmlFor="spaceId"
+                      className="block text-sm font-bold text-[#1a1c1b] mb-1"
+                    >
+                      スペース
+                    </label>
+                    <select
+                      id="spaceId"
+                      name="spaceId"
+                      required
+                      className="block w-full px-4 py-3 border-2 border-[#1a1c1b] rounded-full focus:outline-none focus:border-[#880069] font-medium"
+                    >
+                      <option value="">スペースを選択してください</option>
+                      {spaces.map((space) => (
+                        <option key={space.id} value={space.id}>
+                          {space.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* 表示名 */}
                 <div>
-                  <label htmlFor="spaceId" className="block text-sm font-medium text-gray-700 mb-1">
-                    スペース
-                  </label>
-                  <select
-                    id="spaceId"
-                    name="spaceId"
-                    required
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  <label
+                    htmlFor="playerName"
+                    className="block text-sm font-bold text-[#1a1c1b] mb-1"
                   >
-                    <option value="">スペースを選択してください</option>
-                    {spaces.map((space) => (
-                      <option key={space.id} value={space.id}>
-                        {space.name}
-                      </option>
-                    ))}
-                  </select>
+                    あなたの表示名
+                  </label>
+                  <input
+                    id="playerName"
+                    name="playerName"
+                    type="text"
+                    required
+                    maxLength={50}
+                    defaultValue={user.name}
+                    className="block w-full px-4 py-3 border-2 border-[#1a1c1b] rounded-full focus:outline-none focus:border-[#880069] font-medium"
+                  />
                 </div>
-              )}
 
-              {/* 表示名 */}
-              <div>
-                <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-1">
-                  あなたの表示名
-                </label>
-                <input
-                  id="playerName"
-                  name="playerName"
-                  type="text"
-                  required
-                  maxLength={50}
-                  defaultValue={user.name}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full flex justify-center py-3.5 px-4 bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-full font-bold text-[#1a1c1b] neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? "作成中..." : "ゲームを作成して招待コードを取得"}
+                </button>
+              </Form>
+            </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50 transition-colors"
+            <div className="bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow p-5 mt-4">
+              <h3
+                className="text-sm font-bold text-[#1a1c1b] mb-3"
+                style={{ fontFamily: "Quicksand" }}
               >
-                {isSubmitting ? "作成中..." : "ゲームを作成して招待コードを取得"}
-              </button>
-            </Form>
-          </div>
-
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mt-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">ゲームの流れ</h3>
-            <ol className="space-y-3">
-              {[
-                { step: "1", text: "招待コードをチームメンバーに共有" },
-                { step: "2", text: "全員が参加したらゲーム開始" },
-                { step: "3", text: "順番に価値観カードを引いて5枚を選ぶ" },
-                { step: "4", text: "互いの選択を見ながら話し合う" },
-              ].map(({ step, text }) => (
-                <li key={step} className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">
-                    {step}
-                  </span>
-                  <span className="text-sm text-gray-600 mt-0.5">{text}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
+                ゲームの流れ
+              </h3>
+              <ol className="space-y-3">
+                {[
+                  { step: "1", text: "招待コードをチームメンバーに共有" },
+                  { step: "2", text: "全員が参加したらゲーム開始" },
+                  { step: "3", text: "順番に価値観カードを引いて5枚を選ぶ" },
+                  { step: "4", text: "互いの選択を見ながら話し合う" },
+                ].map(({ step, text }) => (
+                  <li key={step} className="flex items-start gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#880069] text-white text-xs flex items-center justify-center font-bold">
+                      {step}
+                    </span>
+                    <span className="text-sm text-[#1a1c1b]/70 mt-0.5">{text}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </>
         )}
       </div>

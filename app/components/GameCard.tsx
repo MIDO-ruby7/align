@@ -1,18 +1,15 @@
 /**
- * GameCard - 価値観カードコンポーネント v2
- * 白背景固定、上辺カラーアクセントバー（8色サイクル）、リアルなカード感
+ * GameCard - 価値観カードコンポーネント
+ * ネオブルータリスト × ぷにぷにポップデザイン
+ * colored border バリエーション (4色ローテーション)
  */
 import { useFetcher } from "react-router";
 
-const accentBars = [
-  "bg-indigo-500",
-  "bg-violet-500",
-  "bg-purple-500",
-  "bg-fuchsia-500",
-  "bg-sky-500",
-  "bg-teal-500",
-  "bg-amber-500",
-  "bg-rose-500",
+const cardBorders = [
+  "border-[#ff71ce]",
+  "border-[#00bd76]",
+  "border-[#e7e482]",
+  "border-[#880069]",
 ] as const;
 
 interface GameCardProps {
@@ -34,22 +31,19 @@ export function GameCard({
 }: GameCardProps) {
   const discardFetcher = useFetcher({ key: `discard-card-${cardId}` });
   const isDiscarding = discardFetcher.state !== "idle";
-  const accentBar = accentBars[index % accentBars.length];
+  const borderColor = cardBorders[index % cardBorders.length];
 
   return (
     <div
       className={[
-        // ベーススタイル（縦比を 2/3 に短縮しカード感を強化）
-        "relative rounded-xl overflow-hidden",
-        "aspect-[2/3] flex flex-col select-none",
-        // 捨てモードと通常で背景・ボーダーを変える
+        // ベーススタイル
+        "relative bg-white border-2 rounded-2xl neo-shadow",
+        "aspect-[2/3] flex flex-col items-center justify-center p-4 select-none",
+        borderColor,
+        // 捨てモード
         isDiscardable && !isDiscarding
-          ? "bg-amber-50 border-2 border-amber-400 cursor-pointer game-card-discardable"
-          : "bg-white border border-gray-200",
-        // シャドウ
-        isDiscardable && !isDiscarding
-          ? "shadow-[0_8px_24px_rgba(0,0,0,0.14)]"
-          : "shadow-[0_2px_8px_rgba(0,0,0,0.10)]",
+          ? "cursor-pointer game-card-discardable"
+          : "",
         // アニメーション
         animateIn ? "animate-card-draw" : "",
         isDiscarding ? "opacity-40 animate-card-discard pointer-events-none" : "",
@@ -67,23 +61,29 @@ export function GameCard({
       role={isDiscardable ? "button" : undefined}
       aria-label={isDiscardable ? `${text} を捨てる` : undefined}
     >
-      {/* 上辺アクセントバー（太め 6px で視認性向上） */}
-      <div className={`h-1.5 w-full flex-shrink-0 ${accentBar}`} />
+      {/* 捨てモード時の SELECT バッジ */}
+      {isDiscardable && !isDiscarding && (
+        <div className="absolute -top-2 -right-2 bg-[#e7e482] border-2 border-[#1a1c1b] rounded-full px-2 py-0.5 neo-shadow z-10">
+          <span className="text-[10px] font-black text-[#1a1c1b] tracking-wide">
+            SELECT
+          </span>
+        </div>
+      )}
 
       {/* テキストエリア */}
-      <div className="flex-1 flex items-center justify-center px-3 py-2">
-        <p className={[
-          "font-bold text-center leading-snug break-words w-full",
-          isDiscardable ? "text-base text-gray-800" : "text-base text-gray-800",
-        ].join(" ")}>
-          {text || "…"}
-        </p>
-      </div>
+      <p
+        className={[
+          "font-bold text-center leading-snug break-words w-full text-base",
+          isDiscardable ? "text-[#1a1c1b]" : "text-[#1a1c1b]",
+        ].join(" ")}
+      >
+        {text || "…"}
+      </p>
 
-      {/* 下部: 捨てるヒント（捨てモード時のみ） */}
+      {/* 捨てモード時の下部ヒント */}
       {isDiscardable && (
-        <div className="pb-2.5 flex justify-center">
-          <span className="text-xs font-semibold text-amber-600 tracking-wide">
+        <div className="absolute bottom-2.5 left-0 right-0 flex justify-center">
+          <span className="text-[10px] font-bold text-[#880069] tracking-wide">
             {isDiscarding ? "捨て中…" : "タップして捨てる"}
           </span>
         </div>

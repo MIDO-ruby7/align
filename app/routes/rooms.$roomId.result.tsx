@@ -6,6 +6,7 @@
  */
 import { data, redirect } from "react-router";
 import { useState } from "react";
+import { Share2, LogOut } from "lucide-react";
 import type { Route } from "./+types/rooms.$roomId.result";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -92,6 +93,22 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
   });
 }
 
+// アバター背景色（プレイヤーインデックスでローテーション）
+const avatarColors = [
+  "bg-[#ff71ce]",
+  "bg-[#e7e482]",
+  "bg-[#9cf5be]",
+  "bg-[#00bd76]",
+];
+
+// カードボーダー色（カードインデックスでローテーション）
+const cardBorderColors = [
+  "border-[#ff71ce]",
+  "border-[#00bd76]",
+  "border-[#e7e482]",
+  "border-[#880069]",
+];
+
 export default function ResultPage({ loaderData }: Route.ComponentProps) {
   const { room, players, shareUrl } = loaderData;
   const [copied, setCopied] = useState(false);
@@ -104,93 +121,108 @@ export default function ResultPage({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        {/* ヘッダー */}
-        <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl text-white text-center py-8 px-6 mb-8 shadow-lg">
-          <p className="text-4xl mb-2">🎉</p>
-          <h1 className="text-2xl font-bold mb-1">ゲーム終了！</h1>
-          <p className="text-indigo-100 text-sm mb-5">
-            {room.space?.name ?? "Align"} — みんなの価値観が揃いました
+    <div className="min-h-screen bg-[#f9f9f7]">
+      <div className="max-w-2xl mx-auto py-8 px-4">
+        {/* GAME OVER ヘッダー */}
+        <div className="text-center mb-6">
+          <div className="inline-block bg-[#880069] border-4 border-[#1a1c1b] rounded-full px-8 py-3 neo-shadow-lg mb-3">
+            <h1
+              className="text-3xl font-black text-white tracking-wide"
+              style={{ fontFamily: "Quicksand" }}
+            >
+              GAME OVER
+            </h1>
+          </div>
+          <p className="text-lg font-bold text-[#1a1c1b]">
+            Fantastic effort, everyone!
           </p>
-          <button
-            type="button"
-            onClick={handleShare}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/20 hover:bg-white/30 transition-colors border border-white/30"
-          >
-            {copied ? "コピーしました！" : "結果 URL をコピー"}
-          </button>
         </div>
 
         {/* プレイヤーごとの結果 */}
-        <div className="grid gap-6 sm:grid-cols-2">
-          {players.map((player) => (
+        <div className="space-y-4 mb-8">
+          {players.map((player, playerIdx) => (
             <div
               key={player.playerId}
-              className={`bg-white rounded-xl shadow p-5 ${
-                player.isMe ? "ring-2 ring-indigo-400" : ""
+              className={`relative bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow-lg p-5 ${
+                player.isMe ? "ring-2 ring-[#880069] ring-offset-2" : ""
               }`}
             >
+              {/* WINNER バッジ（1位のプレイヤーに表示） */}
+              {playerIdx === 0 && (
+                <div className="absolute -top-2 -right-2 bg-[#00bd76] border-2 border-[#1a1c1b] rounded-full px-3 py-1 neo-shadow">
+                  <span className="text-white text-xs font-black">
+                    &#9733; WINNER
+                  </span>
+                </div>
+              )}
+
+              {/* プレイヤー情報 */}
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm flex-shrink-0">
+                <div
+                  className={`w-10 h-10 rounded-full border-2 border-[#1a1c1b] flex items-center justify-center font-black text-[#1a1c1b] flex-shrink-0 ${
+                    avatarColors[playerIdx % avatarColors.length]
+                  }`}
+                >
                   {player.playerName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900">
+                  <h2 className="font-black text-[#1a1c1b]" style={{ fontFamily: "Quicksand" }}>
                     {player.playerName}
                     {player.isMe && (
-                      <span className="ml-2 text-xs font-normal text-gray-400">
+                      <span className="ml-2 text-xs font-normal text-[#1a1c1b]/40">
                         （あなた）
                       </span>
                     )}
                   </h2>
-                  {player.seatOrder !== null && (
-                    <p className="text-xs text-gray-400">
-                      席順 {player.seatOrder + 1}
-                    </p>
-                  )}
+                  <p className="text-xs text-[#1a1c1b]/40">
+                    {player.hand.length} 枚
+                  </p>
                 </div>
               </div>
 
-              {/* 手札カード一覧 */}
+              {/* 手札カード一覧（横並び小カード） */}
               {player.hand.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">
+                <p className="text-sm text-[#1a1c1b]/40 text-center py-4">
                   カードなし
                 </p>
               ) : (
-                <ol className="space-y-2">
-                  {player.hand.map((card, idx) => (
-                    <li
+                <div className="flex gap-2 flex-wrap">
+                  {player.hand.map((card, cardIdx) => (
+                    <div
                       key={card.cardId}
-                      className="flex gap-3 items-start p-2 rounded-lg bg-gray-50"
+                      className={`border-2 rounded-xl px-3 py-2 bg-white flex-1 min-w-[80px] max-w-[120px] text-center neo-shadow ${
+                        cardBorderColors[cardIdx % cardBorderColors.length]
+                      }`}
                     >
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">
-                        {idx + 1}
-                      </span>
-                      <span className="text-sm text-gray-800 leading-relaxed">
+                      <p className="text-xs font-bold text-[#1a1c1b] leading-tight">
                         {card.cardText}
-                      </span>
-                    </li>
+                      </p>
+                    </div>
                   ))}
-                </ol>
+                </div>
               )}
             </div>
           ))}
         </div>
 
-        {/* フッターリンク */}
-        <div className="text-center mt-10 flex flex-col sm:flex-row gap-3 justify-center">
+        {/* アクションボタン */}
+        <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="w-full flex items-center justify-center gap-2 py-4 bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-full font-black text-[#1a1c1b] neo-shadow-lg hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#1a1c1b] transition-all"
+            style={{ fontFamily: "Quicksand" }}
+          >
+            <Share2 size={18} />
+            {copied ? "コピーしました！" : "Share Results"}
+          </button>
           <a
             href={`/spaces/${room.spaceId}`}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-white border-4 border-[#1a1c1b] rounded-full font-black text-[#1a1c1b] neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all"
+            style={{ fontFamily: "Quicksand" }}
           >
-            スペースハブへ戻る
-          </a>
-          <a
-            href="/spaces"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
-          >
-            スペース一覧
+            <LogOut size={18} />
+            Back to Lobby
           </a>
         </div>
       </div>

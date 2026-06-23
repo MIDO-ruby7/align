@@ -1,6 +1,7 @@
 import { data, redirect } from "react-router";
 import { Form, useNavigation } from "react-router";
 import { useState } from "react";
+import { Copy, Check } from "lucide-react";
 import type { Route } from "./+types/rooms.$roomId._index";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -214,20 +215,6 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
   const isStarting = navigation.state === "submitting";
   const [inviteCopied, setInviteCopied] = useState(false);
 
-  const statusLabel =
-    room.status === "waiting"
-      ? "待機中"
-      : room.status === "playing"
-        ? "プレイ中"
-        : "終了";
-
-  const statusColor =
-    room.status === "waiting"
-      ? "bg-yellow-100 text-yellow-800"
-      : room.status === "playing"
-        ? "bg-green-100 text-green-800"
-        : "bg-gray-100 text-gray-800";
-
   const handleCopyInviteCode = () => {
     navigator.clipboard?.writeText(room.inviteCode).then(() => {
       setInviteCopied(true);
@@ -235,19 +222,31 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
     }).catch(() => {});
   };
 
+  // 招待コードを空白区切りで見やすく表示 (例: "739 421")
+  const formattedCode = room.inviteCode
+    .split("")
+    .map((c, i) => (i === 3 ? ` ${c}` : c))
+    .join("");
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f9f9f7]">
       {/* ヘッダー */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b-4 border-[#1a1c1b]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <a href="/spaces" className="text-lg font-bold text-indigo-600">
+            <a
+              href="/spaces"
+              className="text-lg font-black text-[#880069]"
+              style={{ fontFamily: "Quicksand" }}
+            >
               Align
             </a>
-            {/* パンくず */}
             {room.space && (
-              <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                <a href={`/spaces/${room.spaceId}`} className="hover:text-indigo-600">
+              <div className="flex items-center gap-1 text-xs text-[#1a1c1b]/50 mt-0.5">
+                <a
+                  href={`/spaces/${room.spaceId}`}
+                  className="hover:text-[#880069]"
+                >
                   {room.space.name}
                 </a>
                 <span>&rsaquo;</span>
@@ -255,137 +254,150 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
               </div>
             )}
           </div>
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}>
-            {statusLabel}
-          </span>
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto py-6 px-4 space-y-4">
-        {/* ルーム情報 */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {room.space?.name ?? "ゲームロビー"}
-              </h1>
-              <p className="text-sm text-gray-500 mt-0.5">
-                ホスト: {hostUser?.name ?? "不明"}
-              </p>
-            </div>
-          </div>
-
-          {/* 招待コード */}
-          <div className="bg-indigo-50 rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-indigo-500 font-medium mb-1">招待コード</p>
-              <p className="text-3xl font-mono font-bold text-indigo-700 tracking-widest">
-                {room.inviteCode}
-              </p>
-            </div>
+      <div className="max-w-2xl mx-auto py-6 px-4 space-y-6">
+        {/* 招待コードセクション */}
+        <div className="text-center">
+          <p
+            className="text-xs font-bold text-[#1a1c1b]/50 uppercase tracking-widest mb-3"
+            style={{ fontFamily: "Quicksand" }}
+          >
+            INVITE YOUR FRIENDS
+          </p>
+          <div className="bg-[#e7e482] border-4 border-[#1a1c1b] rounded-3xl px-8 py-5 neo-shadow-lg inline-block w-full max-w-xs">
+            <p
+              className="text-5xl font-black text-[#1a1c1b] tracking-[0.2em]"
+              style={{ fontFamily: "Quicksand" }}
+            >
+              {formattedCode}
+            </p>
             <button
               type="button"
               onClick={handleCopyInviteCode}
-              className={`ml-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                inviteCopied
-                  ? "bg-green-100 text-green-700 border border-green-200"
-                  : "bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50"
-              }`}
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-[#1a1c1b]/70 hover:text-[#1a1c1b] transition-colors"
             >
-              {inviteCopied ? "✓ コピー済み" : "コピー"}
+              {inviteCopied ? (
+                <>
+                  <Check size={14} />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy size={14} />
+                  Copy Code
+                </>
+              )}
             </button>
-          </div>
-
-          <div className="mt-3 text-sm text-gray-500">
-            参加人数: <span className="font-semibold text-gray-800">{players.length}</span> / 8
           </div>
         </div>
 
         {/* エラーメッセージ */}
         {actionData && "error" in actionData && actionData.error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-50 border-2 border-red-400 text-red-700 px-4 py-3 rounded-xl">
             {actionData.error}
           </div>
         )}
 
         {/* 参加者一覧 */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-3">
-            参加者一覧
-          </h2>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2
+              className="text-xl font-black text-[#1a1c1b]"
+              style={{ fontFamily: "Quicksand" }}
+            >
+              Joined Players
+            </h2>
+            <span className="bg-white border-2 border-[#1a1c1b] rounded-full px-3 py-1 text-sm font-bold text-[#1a1c1b]">
+              {players.length}/8
+            </span>
+          </div>
+
           {players.length === 0 ? (
-            <p className="text-gray-400 text-sm">参加者はまだいません</p>
+            <div className="flex items-center gap-3 bg-white/50 border-2 border-[#1a1c1b]/30 rounded-full px-4 py-3">
+              <div className="w-8 h-8 rounded-full border-2 border-[#1a1c1b]/20 flex items-center justify-center">
+                <span className="text-[#1a1c1b]/30 text-lg">+</span>
+              </div>
+              <span className="text-sm text-[#1a1c1b]/40 font-medium">Waiting...</span>
+            </div>
           ) : (
-            <ul className="space-y-2">
-              {players.map((player) => (
-                <li
-                  key={player.id}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-gray-50"
-                >
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm flex-shrink-0">
-                    {player.name.charAt(0).toUpperCase()}
+            <div className="grid grid-cols-2 gap-2">
+              {players.map((player) => {
+                const isMe = player.userId === user.id;
+                const isPlayerHost = player.userId === room.hostUserId;
+                return (
+                  <div
+                    key={player.id}
+                    className="flex items-center gap-3 bg-white border-2 border-[#1a1c1b] rounded-full px-4 py-2 neo-shadow"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-[#ff71ce] border-2 border-[#1a1c1b] flex items-center justify-center text-sm font-black text-[#1a1c1b] flex-shrink-0">
+                      {player.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm text-[#1a1c1b] truncate">
+                        {player.name}
+                        {isPlayerHost && (
+                          <span className="ml-1 text-[10px] text-[#880069]">(Host)</span>
+                        )}
+                      </p>
+                      {isMe ? (
+                        <p className="text-xs text-[#00bd76] font-bold flex items-center gap-0.5">
+                          <span>&#10003;</span> Ready
+                        </p>
+                      ) : (
+                        <p className="text-xs text-[#1a1c1b]/40 font-medium">
+                          Thinking...
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <span className="text-gray-900 font-medium">
-                      {player.name}
-                    </span>
-                    {player.userId === user.id && (
-                      <span className="ml-2 text-xs text-gray-400">（あなた）</span>
-                    )}
-                  </div>
-                  {player.userId === room.hostUserId && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                      ホスト
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 待機スロット */}
+          {players.length > 0 && players.length < 8 && (
+            <div className="mt-2 flex items-center gap-3 bg-white/40 border-2 border-[#1a1c1b]/20 rounded-full px-4 py-2.5">
+              <div className="w-8 h-8 rounded-full border-2 border-[#1a1c1b]/20 flex items-center justify-center">
+                <span className="text-[#1a1c1b]/30 text-base leading-none">+</span>
+              </div>
+              <span className="text-sm text-[#1a1c1b]/40 font-medium">Waiting...</span>
+            </div>
           )}
         </div>
 
-        {/* ゲーム開始ボタン（ホストのみ） */}
-        {isHost && room.status === "waiting" && (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-1">
-              ゲーム操作
-            </h2>
-            <p className="text-sm text-gray-500 mb-4">
-              全員が参加したらゲームを開始してください。
+        {/* 非ホスト待機案内 */}
+        {!isHost && room.status === "waiting" && (
+          <div className="bg-white border-2 border-[#1a1c1b] rounded-full px-5 py-3 text-center neo-shadow">
+            <p className="text-sm text-[#1a1c1b] font-medium flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#00bd76] inline-block"></span>
+              Ready! Waiting for {hostUser?.name ?? "host"} to start.
             </p>
-            <Form method="post">
-              <input type="hidden" name="intent" value="start" />
-              <button
-                type="submit"
-                disabled={isStarting || players.length < 1}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isStarting ? "開始中..." : "ゲームを開始する"}
-              </button>
-            </Form>
           </div>
         )}
 
-        {/* 非ホスト待機案内 */}
-        {!isHost && room.status === "waiting" && (
-          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 text-center">
-            <p className="text-sm text-indigo-700 font-medium">
-              ホスト（{hostUser?.name ?? "ホスト"}さん）がゲームを開始するまでお待ちください
-            </p>
-            <p className="text-xs text-indigo-400 mt-1">
-              ゲームが始まると自動的に移動します
-            </p>
-          </div>
+        {/* ゲーム開始ボタン（ホストのみ） */}
+        {isHost && room.status === "waiting" && (
+          <Form method="post">
+            <input type="hidden" name="intent" value="start" />
+            <button
+              type="submit"
+              disabled={isStarting || players.length < 1}
+              className="w-full py-5 bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-full font-black text-[#1a1c1b] text-xl neo-shadow-lg hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#1a1c1b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ fontFamily: "Quicksand" }}
+            >
+              {isStarting ? "Starting..." : "Start Game"}
+            </button>
+          </Form>
         )}
 
         {/* ゲーム中の表示 */}
         {room.status === "playing" && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-            <p className="text-green-800 font-semibold text-lg">
+          <div className="bg-[#00bd76] border-4 border-[#1a1c1b] rounded-2xl neo-shadow p-6 text-center">
+            <p className="text-white font-black text-lg" style={{ fontFamily: "Quicksand" }}>
               ゲームが開始されました！
-            </p>
-            <p className="text-green-600 text-sm mt-1">
-              ゲーム機能（ドロー・ディスカード）が有効です
             </p>
           </div>
         )}

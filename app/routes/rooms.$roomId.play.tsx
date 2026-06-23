@@ -297,52 +297,70 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
 
   const isDiscardMode = gameState.myHand.length >= 6;
 
+  // ターン番号を推定（完了したdiscardターン数から）
+  const turnNumber = Math.floor(
+    (gameState.players.length > 0
+      ? sortedPlayers.findIndex((p) => p.id === gameState.currentPlayerId)
+      : 0) + 1,
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 to-indigo-50">
+    <div className="min-h-screen bg-[#f9f9f7]">
       {/* 接続断バナー */}
       {gameState.disconnected && (
-        <div className="reconnecting-banner bg-red-500 text-white text-center py-2 px-4 text-sm font-medium">
+        <div className="reconnecting-banner bg-red-500 text-white text-center py-2 px-4 text-sm font-bold">
           接続が切れました。再接続中...
         </div>
       )}
 
       <div className="max-w-3xl mx-auto py-4 px-4">
         {/* 上部: ゲーム状態バー */}
-        <div className="bg-gradient-to-r from-indigo-500 to-violet-500 text-white rounded-xl shadow p-4 mb-4">
-          <div className="flex flex-wrap gap-4 items-center justify-between">
-            <div>
-              <span className="text-sm text-indigo-100">現在のターン</span>
-              <p className="font-bold text-lg">
-                {currentPlayer ? `${currentPlayer.name}さん` : "待機中"}
-              </p>
-            </div>
-            <div className="flex gap-6">
-              <div className="text-center">
-                <p className="text-xs text-indigo-100">山札</p>
-                <p className="text-xl font-bold">
-                  {gameState.deckCount}
-                  <span className="text-sm font-normal text-indigo-200 ml-1">
-                    枚
-                  </span>
+        <div className="bg-white border-2 border-[#1a1c1b] rounded-xl neo-shadow p-4 mb-4">
+          <div className="flex flex-wrap gap-3 items-center justify-between">
+            {/* ターン */}
+            <div className="flex items-center gap-2">
+              <div className="bg-[#f9f9f7] border-2 border-[#1a1c1b] rounded-xl px-3 py-1.5">
+                <p className="text-[10px] font-bold text-[#1a1c1b]/50 uppercase tracking-widest">TURN</p>
+                <p
+                  className="font-black text-xl text-[#1a1c1b] leading-none"
+                  style={{ fontFamily: "Quicksand" }}
+                >
+                  {turnNumber}
                 </p>
               </div>
-              <div className="text-center">
-                <p className="text-xs text-indigo-100">捨て札</p>
-                <p className="text-xl font-bold">
+              <div className="text-sm font-bold text-[#1a1c1b]">
+                {currentPlayer ? `${currentPlayer.name}さん` : "待機中"}
+              </div>
+            </div>
+
+            {/* 山札・捨て札カウント */}
+            <div className="flex gap-3">
+              <div className="bg-[#9cf5be]/40 border-2 border-[#1a1c1b] rounded-xl px-3 py-1.5 text-center">
+                <p className="text-[10px] font-bold text-[#1a1c1b]/50 uppercase tracking-widest">DECK</p>
+                <p
+                  className="font-black text-xl text-[#1a1c1b] leading-none"
+                  style={{ fontFamily: "Quicksand" }}
+                >
+                  {gameState.deckCount}
+                </p>
+              </div>
+              <div className="bg-[#ff71ce]/20 border-2 border-[#1a1c1b] rounded-xl px-3 py-1.5 text-center">
+                <p className="text-[10px] font-bold text-[#1a1c1b]/50 uppercase tracking-widest">DISCARD</p>
+                <p
+                  className="font-black text-xl text-[#1a1c1b] leading-none"
+                  style={{ fontFamily: "Quicksand" }}
+                >
                   {gameState.otherCount}
-                  <span className="text-sm font-normal text-indigo-200 ml-1">
-                    枚
-                  </span>
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* discard モード全幅バナー */}
+        {/* 捨てモードバナー */}
         {isDiscardMode && myTurnCanDiscard && (
-          <div className="bg-amber-400 text-amber-900 rounded-xl px-4 py-3 mb-4 flex items-center gap-2 font-semibold text-sm">
-            <span>⚠️</span>
+          <div className="bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-xl px-4 py-3 mb-4 flex items-center gap-2 font-bold text-[#1a1c1b] text-sm neo-shadow">
+            <span className="text-base">!</span>
             手札が6枚です。捨てるカードを1枚タップしてください
           </div>
         )}
@@ -350,7 +368,10 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
         {/* ドロー操作（draw フェーズ）: 手札の上に配置 */}
         {!isDiscardMode && (
           <div className="mb-6">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-5 text-center">
+            <h2
+              className="text-xs font-bold text-[#1a1c1b]/40 uppercase tracking-widest mb-5 text-center"
+              style={{ fontFamily: "Quicksand" }}
+            >
               カードを引く
             </h2>
             <div className="flex justify-center items-end gap-10">
@@ -393,8 +414,8 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
 
             {/* 待機メッセージ */}
             {!myTurnCanDraw && gameState.currentPlayerId !== myPlayerId && (
-              <div className="bg-gray-50 rounded-xl px-4 py-3 mt-5 text-sm text-gray-500 text-center">
-                <span className="font-medium text-gray-700">
+              <div className="bg-white border-2 border-[#1a1c1b] rounded-full px-4 py-3 mt-5 text-sm text-[#1a1c1b]/60 text-center neo-shadow">
+                <span className="font-bold text-[#1a1c1b]">
                   {currentPlayer?.name ?? "?"}さん
                 </span>{" "}
                 のターンです。お待ちください
@@ -404,19 +425,27 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
         )}
 
         {/* 手札エリア */}
-        <div className="bg-white rounded-xl shadow p-4 mb-4">
+        <div className="bg-white border-2 border-[#1a1c1b] rounded-xl neo-shadow p-4 mb-4">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-sm font-semibold text-gray-700">
-              手札 ({gameState.myHand.length} / 6)
+            <h2
+              className="text-sm font-bold text-[#1a1c1b]"
+              style={{ fontFamily: "Quicksand" }}
+            >
+              Your Hand
             </h2>
+            {isDiscardMode && myTurnCanDiscard && (
+              <span className="text-xs font-bold text-[#880069] uppercase tracking-wide">
+                SELECT A CARD TO PLAY
+              </span>
+            )}
           </div>
 
           {gameState.myHand.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">
+            <p className="text-sm text-[#1a1c1b]/40 text-center py-8">
               手札がありません
             </p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-1 max-w-md mx-auto sm:max-w-none">
+            <div className="grid grid-cols-2 gap-3 p-1 max-w-md mx-auto sm:max-w-none">
               {gameState.myHand.map((cardId, idx) => (
                 <GameCard
                   key={cardId}
@@ -430,13 +459,15 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
               ))}
             </div>
           )}
-
         </div>
 
         {/* プレイヤー一覧 */}
-        <div className="bg-white rounded-xl shadow p-4">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">
-            プレイヤー一覧
+        <div className="bg-white border-2 border-[#1a1c1b] rounded-xl neo-shadow p-4">
+          <h2
+            className="text-sm font-bold text-[#1a1c1b] mb-3"
+            style={{ fontFamily: "Quicksand" }}
+          >
+            Players
           </h2>
           <div className="space-y-2">
             {sortedPlayers.map((player, idx) => {
@@ -445,28 +476,37 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                    isCurrent ? "bg-indigo-50" : "bg-gray-50"
+                  className={`flex items-center gap-3 p-2 rounded-full border-2 transition-colors ${
+                    isCurrent
+                      ? "bg-[#e7e482] border-[#1a1c1b]"
+                      : "bg-[#f9f9f7] border-transparent"
                   }`}
                 >
-                  <span className="text-xs text-gray-400 w-5 text-center">
+                  <span className="text-xs text-[#1a1c1b]/40 w-5 text-center font-bold">
                     {idx + 1}
                   </span>
-                  <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-xs flex-shrink-0">
+                  <div
+                    className={`w-7 h-7 rounded-full border-2 border-[#1a1c1b] flex items-center justify-center text-xs font-black flex-shrink-0 ${
+                      isCurrent ? "bg-[#ff71ce]" : "bg-white"
+                    }`}
+                  >
                     {player.name.charAt(0).toUpperCase()}
                   </div>
                   <span
-                    className={`text-sm flex-1 ${isCurrent ? "font-bold text-indigo-700" : "text-gray-800"}`}
+                    className={`text-sm flex-1 font-medium ${isCurrent ? "font-bold text-[#1a1c1b]" : "text-[#1a1c1b]/70"}`}
                   >
                     {player.name}
                     {isMe && (
-                      <span className="ml-1 text-xs text-gray-400 font-normal">
+                      <span className="ml-1 text-xs text-[#1a1c1b]/40 font-normal">
                         （あなた）
                       </span>
                     )}
                   </span>
                   {isCurrent && (
-                    <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full">
+                    <span
+                      className="text-xs bg-[#880069] text-white px-2 py-0.5 rounded-full font-bold"
+                      style={{ fontFamily: "Quicksand" }}
+                    >
                       ターン中
                     </span>
                   )}
