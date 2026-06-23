@@ -418,7 +418,7 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
               手札がありません
             </p>
           ) : (
-            <div className="grid grid-cols-2 gap-3 p-1 max-w-md mx-auto sm:max-w-none">
+            <div className="grid grid-cols-2 gap-3 p-1 md:flex md:flex-row md:gap-3 md:justify-center md:items-end md:flex-wrap">
               {gameState.myHand.map((cardId, idx) => (
                 <GameCard
                   key={cardId}

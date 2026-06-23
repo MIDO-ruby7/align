@@ -36,9 +36,10 @@ export function GameCard({
   return (
     <div
       className={[
-        // ベーススタイル
+        // ベーススタイル（PC横並び時は固定幅で縦横比維持）
         "relative bg-white border-2 rounded-2xl neo-shadow",
         "aspect-[2/3] flex flex-col items-center justify-center p-4 select-none",
+        "md:w-32 md:flex-shrink-0",
         borderColor,
         // 捨てモード
         isDiscardable && !isDiscarding
