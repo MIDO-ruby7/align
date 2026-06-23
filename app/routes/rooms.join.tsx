@@ -122,30 +122,38 @@ export default function RoomsJoin({ loaderData, actionData }: Route.ComponentPro
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f9f9f7]">
       <div className="max-w-lg mx-auto px-4 py-8">
         {/* 戻るリンク */}
         <a
           href="/spaces"
-          className="text-indigo-600 text-sm flex items-center gap-1 mb-6 hover:underline"
+          className="text-[#880069] text-sm flex items-center gap-1 mb-6 hover:underline font-medium"
         >
           &larr; スペース一覧に戻る
         </a>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">ルームに参加</h1>
-        <p className="text-gray-500 text-sm mb-6">招待コードを入力してゲームに参加します</p>
+        <h1
+          className="text-2xl font-bold text-[#1a1c1b] mb-1"
+          style={{ fontFamily: "Quicksand" }}
+        >
+          ルームに参加
+        </h1>
+        <p className="text-[#1a1c1b]/50 text-sm mb-6">招待コードを入力してゲームに参加します</p>
 
         {actionData?.error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+          <div className="bg-red-50 border-2 border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4">
             {actionData.error}
           </div>
         )}
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow-lg p-6">
           <Form method="post" className="space-y-4">
             {/* 招待コード */}
             <div>
-              <label htmlFor="inviteCode" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="inviteCode"
+                className="block text-sm font-bold text-[#1a1c1b] mb-1"
+              >
                 招待コード
               </label>
               <input
@@ -155,15 +163,18 @@ export default function RoomsJoin({ loaderData, actionData }: Route.ComponentPro
                 required
                 maxLength={6}
                 placeholder="ABC123"
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 uppercase tracking-widest font-mono text-center text-lg"
-                style={{ textTransform: "uppercase" }}
+                className="block w-full px-4 py-3 border-2 border-[#1a1c1b] rounded-full focus:outline-none focus:border-[#880069] uppercase tracking-widest font-bold text-center text-lg"
+                style={{ textTransform: "uppercase", fontFamily: "Quicksand" }}
               />
-              <p className="mt-1 text-xs text-gray-400">6文字の英数字</p>
+              <p className="mt-1 text-xs text-[#1a1c1b]/40">6文字の英数字</p>
             </div>
 
             {/* 表示名 */}
             <div>
-              <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="playerName"
+                className="block text-sm font-bold text-[#1a1c1b] mb-1"
+              >
                 あなたの表示名
               </label>
               <input
@@ -173,22 +184,27 @@ export default function RoomsJoin({ loaderData, actionData }: Route.ComponentPro
                 required
                 maxLength={50}
                 defaultValue={user.name}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="block w-full px-4 py-3 border-2 border-[#1a1c1b] rounded-full focus:outline-none focus:border-[#880069] font-medium"
               />
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50 transition-colors"
+              className="w-full flex justify-center py-3.5 px-4 bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-full font-bold text-[#1a1c1b] neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all disabled:opacity-50"
             >
               {isSubmitting ? "参加中..." : "ルームに参加する"}
             </button>
           </Form>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mt-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">ゲームの流れ</h3>
+        <div className="bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow p-5 mt-4">
+          <h3
+            className="text-sm font-bold text-[#1a1c1b] mb-3"
+            style={{ fontFamily: "Quicksand" }}
+          >
+            ゲームの流れ
+          </h3>
           <ol className="space-y-3">
             {[
               { step: "1", text: "招待コードを入力" },
@@ -197,10 +213,10 @@ export default function RoomsJoin({ loaderData, actionData }: Route.ComponentPro
               { step: "4", text: "価値観を共有" },
             ].map(({ step, text }) => (
               <li key={step} className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#880069] text-white text-xs flex items-center justify-center font-bold">
                   {step}
                 </span>
-                <span className="text-sm text-gray-600 mt-0.5">{text}</span>
+                <span className="text-sm text-[#1a1c1b]/70 mt-0.5">{text}</span>
               </li>
             ))}
           </ol>

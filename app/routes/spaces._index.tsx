@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import type { Route } from "./+types/spaces._index";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
@@ -33,27 +33,38 @@ export default function SpacesIndex({ loaderData }: Route.ComponentProps) {
   const { user, spaces } = loaderData;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f9f9f7]">
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="flex justify-between items-center mb-6">
+        {/* ヘッダー */}
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">スペース一覧</h1>
-            <p className="text-sm text-gray-600 mt-1">{user.name} さんのスペース</p>
+            <h1
+              className="text-3xl font-bold text-[#1a1c1b]"
+              style={{ fontFamily: "Quicksand" }}
+            >
+              My Spaces
+            </h1>
+            <p className="text-sm text-[#1a1c1b]/60 mt-1">
+              {user.name} さんのコラボレーションスペース
+            </p>
           </div>
           <Link
             to="/spaces/new"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-full font-bold text-[#1a1c1b] text-sm neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all"
           >
+            <Plus size={16} />
             新しいスペースを作成
           </Link>
         </div>
 
         {spaces.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-500 mb-4">まだスペースに参加していません</p>
+          <div className="bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow-lg p-10 text-center">
+            <p className="text-[#1a1c1b]/60 mb-5 text-sm">
+              まだスペースに参加していません
+            </p>
             <Link
               to="/spaces/new"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-full font-bold text-[#1a1c1b] text-sm neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all"
             >
               最初のスペースを作成する
             </Link>
@@ -64,19 +75,25 @@ export default function SpacesIndex({ loaderData }: Route.ComponentProps) {
               <Link
                 key={space.id}
                 to={`/spaces/${space.id}`}
-                className="group bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block"
+                className="group bg-white border-4 border-[#1a1c1b] rounded-2xl p-5 neo-shadow-lg hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#1a1c1b] transition-all block"
               >
-                <div className="flex items-start justify-between mb-2">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                <div className="flex items-start justify-between mb-3">
+                  <h2
+                    className="text-lg font-bold text-[#1a1c1b]"
+                    style={{ fontFamily: "Quicksand" }}
+                  >
                     {space.name}
                   </h2>
-                  <ChevronRight size={18} className="flex-shrink-0 mt-0.5 text-gray-300 group-hover:text-indigo-500 transition-colors" />
+                  <ChevronRight
+                    size={18}
+                    className="flex-shrink-0 mt-0.5 text-[#1a1c1b]/30 group-hover:text-[#880069] transition-colors"
+                  />
                 </div>
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border-2 border-[#1a1c1b] ${
                     space.role === "admin"
-                      ? "bg-purple-100 text-purple-800"
-                      : "bg-gray-100 text-gray-800"
+                      ? "bg-[#ff71ce] text-[#1a1c1b]"
+                      : "bg-[#e7e482] text-[#1a1c1b]"
                   }`}
                 >
                   {space.role === "admin" ? "管理者" : "メンバー"}

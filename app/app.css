@@ -104,3 +104,15 @@ body {
 .game-card-discardable:active {
   transform: perspective(500px) rotateX(2deg) translateY(0) scale(0.97);
 }
+
+/* Neo-brutalist shadows */
+.neo-shadow { box-shadow: 4px 4px 0px 0px #1a1c1b; }
+.neo-shadow-lg { box-shadow: 8px 8px 0px 0px #1a1c1b; }
+.neo-shadow-active:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px 0px #1a1c1b;
+}
+.neo-shadow-lg-active:active {
+  transform: translate(8px, 8px);
+  box-shadow: 0px 0px 0px 0px #1a1c1b;
+}

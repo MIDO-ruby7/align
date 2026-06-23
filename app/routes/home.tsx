@@ -1,14 +1,11 @@
 import { redirect } from "react-router";
 import { Link } from "react-router";
 import { getOptionalUser } from "~/lib/session.server";
-import { Users, Shuffle, Heart, LayoutDashboard } from "lucide-react";
 import type { Route } from "./+types/home";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const user = await getOptionalUser(request, context);
-  if (user) {
-    throw redirect("/spaces");
-  }
+  if (user) throw redirect("/spaces");
   return {};
 }
 
@@ -21,55 +18,47 @@ export function meta() {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
-      <div className="max-w-md w-full text-center px-6">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <LayoutDashboard size={36} className="text-indigo-600" />
-          <h1 className="text-5xl font-bold text-indigo-700">Align</h1>
+    <div className="min-h-screen bg-gradient-to-br from-[#9cf5be] to-[#ffd8eb] flex items-center justify-center p-4">
+      <div className="max-w-sm w-full text-center">
+        {/* Logo */}
+        <div className="mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow-lg mb-4">
+            <span className="text-4xl font-bold text-[#880069]" style={{ fontFamily: 'Quicksand, sans-serif' }}>A</span>
+          </div>
+          <h1 className="text-5xl font-bold text-[#880069] mb-2" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            Align
+          </h1>
+          <p className="text-[#1a1c1b]/60 font-medium" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+            Let's get things in order! ✨
+          </p>
         </div>
-        <p className="text-gray-600 text-lg mb-2">価値観カードゲーム</p>
-        <p className="text-gray-500 text-sm mb-10">
-          チームで価値観カードを選び、互いの大切にしているものを共有しましょう。
-        </p>
+
+        {/* CTAs */}
         <div className="flex flex-col gap-3">
           <Link
             to="/register"
-            className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-sm text-center"
+            className="block w-full bg-[#ff71ce] text-[#1a1c1b] font-bold text-lg py-4 px-8 rounded-full border-4 border-[#1a1c1b] neo-shadow text-center neo-shadow-active transition-all"
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
           >
             新規登録
           </Link>
           <Link
             to="/login"
-            className="block w-full border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-semibold py-3 px-6 rounded-lg transition-colors text-center"
+            className="block w-full bg-white text-[#1a1c1b] font-bold text-lg py-4 px-8 rounded-full border-4 border-[#1a1c1b] neo-shadow text-center neo-shadow-active transition-all"
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
           >
             ログイン
           </Link>
         </div>
 
-        <div className="mt-12 grid grid-cols-3 gap-4 text-center">
-          <div>
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Users size={20} className="text-indigo-600" />
-            </div>
-            <p className="text-xs text-gray-500">チームで集まる</p>
-          </div>
-          <div>
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Shuffle size={20} className="text-indigo-600" />
-            </div>
-            <p className="text-xs text-gray-500">カードを選ぶ</p>
-          </div>
-          <div>
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Heart size={20} className="text-indigo-600" />
-            </div>
-            <p className="text-xs text-gray-500">価値観を共有</p>
-          </div>
+        {/* Info */}
+        <div className="mt-8 flex justify-center gap-4 text-sm text-[#1a1c1b]/50 font-medium" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          <span>最大8人</span>
+          <span>·</span>
+          <span>30〜40分</span>
+          <span>·</span>
+          <span>チームビルディング</span>
         </div>
-
-        <p className="text-xs text-gray-400 mt-8">
-          最大8人 · 30〜40分 · チームビルディング
-        </p>
       </div>
     </div>
   );
