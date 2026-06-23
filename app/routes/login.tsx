@@ -2,7 +2,6 @@ import { redirect, data } from "react-router";
 import { Form, useNavigation, Link } from "react-router";
 import { useState } from "react";
 import {
-  LayoutDashboard,
   Mail,
   Lock,
   Eye,
@@ -79,100 +78,132 @@ export default function Login({ actionData }: Route.ComponentProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-sm border border-gray-200">
-        {/* ロゴ */}
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <LayoutDashboard size={28} className="text-indigo-600" />
-          <span className="text-2xl font-bold text-indigo-700">Align</span>
+    <div className="min-h-screen bg-gradient-to-br from-[#9cf5be] to-[#ffd8eb] flex items-center justify-center p-4">
+      <div className="max-w-sm w-full">
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow mb-3">
+            <span className="text-3xl font-bold text-[#880069]" style={{ fontFamily: 'Quicksand, sans-serif' }}>A</span>
+          </div>
+          <h1 className="text-3xl font-bold text-[#880069]" style={{ fontFamily: 'Quicksand, sans-serif' }}>
+            Align
+          </h1>
+          <p className="text-[#1a1c1b]/60 text-sm mt-1" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+            Let's get things in order! ✨
+          </p>
         </div>
-        <h2 className="text-center text-lg text-gray-600 mb-6">ログイン</h2>
 
-        {/* エラーバナー */}
-        {actionData?.error && (
-          <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            <AlertCircle size={16} className="flex-shrink-0" />
-            <span className="text-sm">{actionData.error}</span>
-          </div>
-        )}
-
-        <Form method="post" className="space-y-5">
-          {/* メールアドレス */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
+        {/* Card */}
+        <div className="bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow-lg p-6">
+          {/* Tab switcher */}
+          <div className="flex bg-[#f4f4f2] border-2 border-[#1a1c1b] rounded-full p-1 mb-6">
+            <Link
+              to="/login"
+              className="flex-1 text-center py-2 text-sm font-bold bg-[#ff71ce] border-2 border-[#1a1c1b] rounded-full text-[#1a1c1b]"
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
             >
-              メールアドレス
-            </label>
-            <div className="relative">
-              <Mail
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                placeholder="you@example.com"
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
+              ログイン
+            </Link>
+            <Link
+              to="/register"
+              className="flex-1 text-center py-2 text-sm font-bold text-[#1a1c1b]/50"
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+            >
+              新規登録
+            </Link>
+          </div>
+
+          {/* エラーバナー */}
+          {actionData?.error && (
+            <div className="flex items-center gap-2 bg-red-50 border-2 border-red-300 text-red-700 px-4 py-3 rounded-xl mb-4">
+              <AlertCircle size={16} className="flex-shrink-0" />
+              <span className="text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>{actionData.error}</span>
             </div>
-          </div>
+          )}
 
-          {/* パスワード */}
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              パスワード
-            </label>
-            <div className="relative">
-              <Lock
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                required
-                className="w-full pl-9 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
+          <Form method="post" className="space-y-4">
+            {/* メールアドレス */}
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-xs font-bold text-[#1a1c1b]/60 mb-1 uppercase tracking-wide"
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
               >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+                Email or Nickname
+              </label>
+              <div className="relative">
+                <Mail
+                  size={16}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1a1c1b]/40 pointer-events-none"
+                />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  placeholder="you@example.com"
+                  className="w-full pl-10 pr-4 py-3 border-2 border-[#1a1c1b] rounded-full focus:outline-none focus:ring-2 focus:ring-[#ff71ce] focus:border-[#ff71ce] bg-[#f9f9f7] text-[#1a1c1b]"
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+                />
+              </div>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50 transition-colors"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader size={16} className="animate-spin" />
-                ログイン中...
-              </>
-            ) : (
-              "ログイン"
-            )}
-          </button>
-        </Form>
+            {/* パスワード */}
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-xs font-bold text-[#1a1c1b]/60 mb-1 uppercase tracking-wide"
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+              >
+                Secret Password
+              </label>
+              <div className="relative">
+                <Lock
+                  size={16}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1a1c1b]/40 pointer-events-none"
+                />
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  className="w-full pl-10 pr-12 py-3 border-2 border-[#1a1c1b] rounded-full focus:outline-none focus:ring-2 focus:ring-[#ff71ce] focus:border-[#ff71ce] bg-[#f9f9f7] text-[#1a1c1b]"
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1a1c1b]/40 hover:text-[#1a1c1b]"
+                  aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
 
-        <p className="text-center text-sm text-gray-600 mt-6">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full flex items-center justify-center gap-2 py-4 px-8 bg-[#ff71ce] text-[#1a1c1b] font-bold text-lg rounded-full border-4 border-[#1a1c1b] neo-shadow neo-shadow-active transition-all disabled:opacity-50"
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader size={18} className="animate-spin" />
+                  ログイン中...
+                </>
+              ) : (
+                "Enter the Journey →"
+              )}
+            </button>
+          </Form>
+        </div>
+
+        <p className="text-center text-sm text-[#1a1c1b]/50 mt-4 font-medium" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
           アカウントをお持ちでない方は{" "}
-          <Link to="/register" className="text-indigo-600 hover:underline">
+          <Link to="/register" className="text-[#880069] font-bold hover:underline">
             新規登録
           </Link>
         </p>
