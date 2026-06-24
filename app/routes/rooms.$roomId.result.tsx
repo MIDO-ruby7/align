@@ -121,20 +121,27 @@ export default function ResultPage({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f9f7]">
-      <div className="max-w-2xl mx-auto py-8 px-4">
-        {/* GAME OVER ヘッダー */}
+    <div className="min-h-screen bg-[#f9f9f7] relative overflow-hidden">
+      {/* バブルアニメーション背景 */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="rb rb1" /><div className="rb rb2" /><div className="rb rb3" />
+        <div className="rb rb4" /><div className="rb rb5" /><div className="rb rb6" />
+        <div className="rb rb7" /><div className="rb rb8" /><div className="rb rb9" />
+        <div className="rb rb10" /><div className="rb rb11" /><div className="rb rb12" />
+      </div>
+      <div className="max-w-2xl mx-auto py-8 px-4 relative z-10">
+        {/* 価値観シェアタイム！ ヘッダー */}
         <div className="text-center mb-6">
           <div className="inline-block bg-[#880069] border-4 border-[#1a1c1b] rounded-full px-8 py-3 neo-shadow-lg mb-3">
             <h1
               className="text-3xl font-black text-white tracking-wide"
               style={{ fontFamily: "Quicksand" }}
             >
-              GAME OVER
+              価値観シェアタイム！
             </h1>
           </div>
           <p className="text-lg font-bold text-[#1a1c1b]">
-            Fantastic effort, everyone!
+            みんなの価値観が揃いました 🎉
           </p>
         </div>
 

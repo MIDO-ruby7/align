@@ -116,3 +116,55 @@ body {
   transform: translate(8px, 8px);
   box-shadow: 0px 0px 0px 0px #1a1c1b;
 }
+
+/* 結果画面: バブル浮遊アニメーション */
+@keyframes bubbleFloat {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.8; }
+  100% { transform: translateY(-110vh) translateX(15px); opacity: 0; }
+}
+
+/* 結果画面: バブル背景 */
+.result-bubbles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.result-bubbles::before,
+.result-bubbles::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  animation: bubbleFloat 8s 0s linear infinite;
+}
+
+/* 個別バブル: data属性で制御 */
+.bubble-item {
+  position: absolute;
+  border-radius: 50%;
+  bottom: -60px;
+  animation: bubbleFloat linear infinite;
+}
+
+/* 結果画面バブル (rb = result bubble) */
+.rb {
+  position: absolute;
+  border-radius: 50%;
+  bottom: -60px;
+  animation: bubbleFloat linear infinite;
+}
+.rb1  { left:5%;  width:20px; height:20px; background:#ff71ce44; border:2px solid #ff71ce; animation-duration:8s;  animation-delay:0s;   }
+.rb2  { left:15%; width:35px; height:35px; background:#9cf5be44; border:2px solid #9cf5be; animation-duration:10s; animation-delay:1.5s; }
+.rb3  { left:28%; width:14px; height:14px; background:#e7e48244; border:2px solid #e7e482; animation-duration:7s;  animation-delay:0.5s; }
+.rb4  { left:42%; width:28px; height:28px; background:#ffaedd44; border:2px solid #ffaedd; animation-duration:9s;  animation-delay:2.5s; }
+.rb5  { left:55%; width:18px; height:18px; background:#9cf5be44; border:2px solid #9cf5be; animation-duration:11s; animation-delay:0.2s; }
+.rb6  { left:68%; width:40px; height:40px; background:#ff71ce44; border:2px solid #ff71ce; animation-duration:8s;  animation-delay:3s;   }
+.rb7  { left:80%; width:22px; height:22px; background:#e7e48244; border:2px solid #e7e482; animation-duration:12s; animation-delay:1s;   }
+.rb8  { left:90%; width:16px; height:16px; background:#ffaedd44; border:2px solid #ffaedd; animation-duration:9s;  animation-delay:4s;   }
+.rb9  { left:10%; width:30px; height:30px; background:#9cf5be44; border:2px solid #9cf5be; animation-duration:7s;  animation-delay:3.5s; }
+.rb10 { left:50%; width:12px; height:12px; background:#ff71ce44; border:2px solid #ff71ce; animation-duration:10s; animation-delay:2s;   }
+.rb11 { left:72%; width:25px; height:25px; background:#e7e48244; border:2px solid #e7e482; animation-duration:8s;  animation-delay:0.8s; }
+.rb12 { left:35%; width:38px; height:38px; background:#ffaedd44; border:2px solid #ffaedd; animation-duration:11s; animation-delay:4.5s; }
