@@ -130,18 +130,18 @@ export default function ResultPage({ loaderData }: Route.ComponentProps) {
         <div className="rb rb10" /><div className="rb rb11" /><div className="rb rb12" />
       </div>
       <div className="max-w-2xl mx-auto py-8 px-4 relative z-10">
-        {/* 価値観シェアタイム！ ヘッダー */}
+        {/* That's a Wrap! ヘッダー */}
         <div className="text-center mb-6">
           <div className="inline-block bg-[#880069] border-4 border-[#1a1c1b] rounded-full px-8 py-3 neo-shadow-lg mb-3">
             <h1
               className="text-3xl font-black text-white tracking-wide"
               style={{ fontFamily: "Quicksand" }}
             >
-              価値観シェアタイム！
+              That's a Wrap!
             </h1>
           </div>
           <p className="text-lg font-bold text-[#1a1c1b]">
-            みんなの価値観が揃いました 🎉
+            Time to share your cards! 🎉
           </p>
         </div>
 
