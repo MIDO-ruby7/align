@@ -1,10 +1,12 @@
 import { redirect } from "react-router";
 import { Form, useNavigation } from "react-router";
-import { Play, Mail, Users, LayoutList, ArrowRight } from "lucide-react";
+import { Play, Mail, Users, LayoutList, ArrowRight, Link } from "lucide-react";
+import { useState } from "react";
 import type { Route } from "./+types/spaces.$spaceId._index";
 import { requireUser } from "~/lib/session.server";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../../db/schema";
+import { eq } from "drizzle-orm";
 import { broadcastRoomEvent } from "~/lib/broadcast.server";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -34,6 +36,14 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     throw new Response("Not Found", { status: 404 });
   }
 
+  // スペースにinviteTokenがなければ生成
+  let spaceWithToken = space;
+  if (!space.inviteToken) {
+    const token = crypto.randomUUID();
+    await db.update(schema.spaces).set({ inviteToken: token }).where(eq(schema.spaces.id, spaceId));
+    spaceWithToken = { ...space, inviteToken: token };
+  }
+
   // スペース内のアクティブルームを取得（waiting または playing）
   const activeRooms = await db.query.rooms.findMany({
     where: (r, { and, eq, or }) =>
@@ -47,13 +57,43 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     limit: 5,
   });
 
-  return { user, space, role: membership.role, activeRooms };
+  return { user, space: spaceWithToken, role: membership.role, activeRooms };
 }
 
-export async function action({ request, context }: Route.ActionArgs) {
+export async function action({ request, context, params }: Route.ActionArgs) {
   const user = await requireUser(request, context);
   const formData = await request.formData();
   const intent = formData.get("intent");
+  const spaceId = params.spaceId;
+
+  if (intent === "delete") {
+    const db = drizzle(context.cloudflare.env.DB, { schema });
+
+    // ホストチェック
+    const membership = await db.query.spaceMembers.findFirst({
+      where: (m, { and, eq }) => and(eq(m.spaceId, spaceId), eq(m.userId, user.id)),
+    });
+
+    if (!membership || membership.role !== "admin") {
+      return { error: "管理者のみ削除できます" };
+    }
+
+    // 進行中ルームチェック
+    const activeRooms = await db.query.rooms.findMany({
+      where: (r, { and, eq, or }) =>
+        and(eq(r.spaceId, spaceId), or(eq(r.status, "waiting"), eq(r.status, "playing"))),
+    });
+    if (activeRooms.length > 0) {
+      return { error: "進行中のゲームがあるため削除できません" };
+    }
+
+    // 関連データ削除（cards → space_members → spaces の順）
+    await db.delete(schema.cards).where(eq(schema.cards.spaceId, spaceId));
+    await db.delete(schema.spaceMembers).where(eq(schema.spaceMembers.spaceId, spaceId));
+    await db.delete(schema.spaces).where(eq(schema.spaces.id, spaceId));
+
+    throw redirect("/spaces");
+  }
 
   if (intent === "join") {
     const inviteCode = formData.get("inviteCode");
@@ -146,6 +186,8 @@ export default function SpaceHub({ loaderData, actionData }: Route.ComponentProp
   const isAdmin = role === "admin";
   const navigation = useNavigation();
   const isJoining = navigation.state === "submitting";
+  const [urlCopied, setUrlCopied] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#f9f9f7]">
@@ -307,6 +349,53 @@ export default function SpaceHub({ loaderData, actionData }: Route.ComponentProp
                 >
                   <Users size={15} /> メンバー一覧
                 </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `${window.location.origin}/spaces/${space.id}/join?token=${space.inviteToken}`;
+                    navigator.clipboard?.writeText(url).then(() => setUrlCopied(true));
+                    setTimeout(() => setUrlCopied(false), 2000);
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#e7e482] border-2 border-[#1a1c1b] rounded-full text-sm font-bold text-[#1a1c1b] neo-shadow neo-shadow-active transition-all"
+                >
+                  <Link size={15} />
+                  {urlCopied ? "コピーしました！" : "招待URLをコピー"}
+                </button>
+              </div>
+              <div className="mt-4 pt-4 border-t border-[#1a1c1b]/10">
+                {actionData?.error && (
+                  <div className="bg-red-50 border-2 border-red-400 text-red-700 px-3 py-2 rounded-xl text-sm mb-3">
+                    {actionData.error}
+                  </div>
+                )}
+                {!confirmDelete ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(true)}
+                    className="text-sm text-red-500 hover:text-red-700 font-medium"
+                  >
+                    スペースを削除
+                  </button>
+                ) : (
+                  <div className="bg-red-50 border-2 border-red-300 rounded-xl p-3">
+                    <p className="text-sm font-bold text-red-700 mb-2">本当に削除しますか？この操作は取り消せません。</p>
+                    <div className="flex gap-2">
+                      <Form method="post">
+                        <input type="hidden" name="intent" value="delete" />
+                        <button type="submit" className="px-3 py-1.5 bg-red-500 text-white text-sm font-bold rounded-full border-2 border-red-700">
+                          削除する
+                        </button>
+                      </Form>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(false)}
+                        className="px-3 py-1.5 bg-white text-gray-700 text-sm font-bold rounded-full border-2 border-gray-300"
+                      >
+                        キャンセル
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </section>

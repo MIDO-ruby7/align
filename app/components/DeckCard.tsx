@@ -13,8 +13,6 @@ interface DeckCardProps {
   isLoading?: boolean;
 }
 
-// 雲模様 SVG data URL パターン
-const cloudPattern = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='40'%3E%3Cellipse cx='20' cy='25' rx='18' ry='12' fill='%23ff71ce' opacity='0.6'/%3E%3Cellipse cx='35' cy='20' rx='15' ry='10' fill='%23ff71ce' opacity='0.5'/%3E%3Cellipse cx='50' cy='28' rx='14' ry='9' fill='%23ff71ce' opacity='0.4'/%3E%3C/svg%3E")`;
 
 export function DeckCard({
   count,

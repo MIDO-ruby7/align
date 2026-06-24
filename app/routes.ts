@@ -15,6 +15,7 @@ export default [
       route(":spaceId/members", "routes/spaces.$spaceId.members.tsx"),
       route(":spaceId/admin/cards", "routes/spaces.$spaceId.admin.cards.tsx"),
       route(":spaceId/admin/settings", "routes/spaces.$spaceId.admin.settings.tsx"),
+      route(":spaceId/join", "routes/spaces.$spaceId.join.tsx"),
     ]),
   ]),
   ...prefix("rooms", [
