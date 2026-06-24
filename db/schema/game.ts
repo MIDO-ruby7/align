@@ -11,6 +11,7 @@ export const spaces = sqliteTable("spaces", {
     .references(() => user.id),
   defaultDeckSize: integer("default_deck_size").notNull().default(10),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  inviteToken: text("invite_token").unique(),
 });
 
 // スペース relations
