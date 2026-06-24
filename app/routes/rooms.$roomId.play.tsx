@@ -398,7 +398,7 @@ export default function PlayPage({ loaderData }: Route.ComponentProps) {
         )}
 
         {/* 手札エリア */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-col gap-3 mb-4">
           <div className="flex justify-between items-center mb-3">
             <h2
               className="text-sm font-bold text-[#1a1c1b]"
