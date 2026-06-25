@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1781823099288,
+      "tag": "0000_living_bulldozer",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781827814156,
+      "tag": "0001_oval_master_chief",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1781830913712,
+      "tag": "0002_damp_warstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1781838660663,
+      "tag": "0003_optimal_wilson_fisk",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1782271752650,
+      "tag": "0004_vengeful_vector",
+      "breakpoints": true
+    }
+  ]
+}

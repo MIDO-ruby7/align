@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "defaultMode": "auto",
+    "allow": [
+      "Bash(aws s3 ls *)",
+      "Bash(aws logs get-log-events *)",
+      "Bash(aws logs describe-log-streams *)",
+      "Bash(aws ecr describe-images *)",
+      "Bash(aws logs filter-log-events *)",
+      "Bash(docker compose ps *)",
+      "Bash(aws sts get-caller-identity *)"
+    ]
+  }
+}

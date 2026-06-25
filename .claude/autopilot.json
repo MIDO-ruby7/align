@@ -1,0 +1,56 @@
+{
+  "project": {
+    "name": "Align",
+    "description": "価値観カードゲーム SaaS",
+    "repo": "MIDO-ruby7/align",
+    "productionUrl": "https://align-production.mintgreen7programming.workers.dev",
+    "baseBranch": "develop",
+    "epicBranch": "epic/1-align-values-card-game",
+    "deployCommand": "pnpm build && wrangler deploy --env production",
+    "techStack": ["Remix", "Cloudflare Workers", "D1", "Durable Objects", "TypeScript"],
+    "targetUser": "チームビルディングを行う組織・チームリーダー"
+  },
+  "loops": {
+    "orchestrate": {
+      "schedule": "0 23 * * *",
+      "description": "毎日 8:00 JST (23:00 UTC) に実行するマスターオーケストレーター"
+    },
+    "dev": {
+      "schedule": "0 0 * * 3",
+      "description": "毎週水曜 9:00 JST - セキュリティ・依存関係・機能改善"
+    },
+    "design": {
+      "schedule": "0 0 * * 1",
+      "description": "毎週月曜 9:00 JST - UI/UX診断・改善PR"
+    },
+    "marketing": {
+      "schedule": "0 2 * * *",
+      "description": "毎日 11:00 JST - X投稿・コンテンツ生成"
+    },
+    "selfImprove": {
+      "schedule": "0 23 1 * *",
+      "description": "毎月1日 8:00 JST - エージェント自己改善"
+    }
+  },
+  "marketing": {
+    "platform": "X",
+    "tone": "カジュアル・親しみやすい",
+    "hashtags": ["#価値観カードゲーム", "#チームビルディング", "#Align", "#バリューカード"],
+    "postFrequency": "daily",
+    "contentTypes": ["機能紹介", "使い方Tips", "チームビルディングTips", "ゲーム画面共有"]
+  },
+  "design": {
+    "brandColors": {
+      "primary": "#4F46E5",
+      "secondary": "#7C3AED",
+      "accent": "#EC4899"
+    },
+    "designSystem": "Tailwind CSS",
+    "screenshotPages": ["/", "/login", "/register", "/spaces", "/rooms/new", "/rooms/join"]
+  },
+  "monitoring": {
+    "errorThreshold": 5,
+    "alertOnErrors": true,
+    "checkInterval": "1h"
+  }
+}
