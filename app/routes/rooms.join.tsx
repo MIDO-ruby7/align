@@ -191,7 +191,7 @@ export default function RoomsJoin({ loaderData, actionData }: Route.ComponentPro
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex justify-center py-3.5 px-4 bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-full font-bold text-[#1a1c1b] neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all disabled:opacity-50"
+              className="w-full flex justify-center py-3.5 px-4 bg-[#880069] border-4 border-[#1a1c1b] rounded-full font-bold text-white neo-shadow-lg neo-shadow-lg-active transition-all disabled:opacity-50"
             >
               {isSubmitting ? "参加中..." : "ルームに参加する"}
             </button>

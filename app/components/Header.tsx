@@ -15,7 +15,7 @@ export function Header({ userName }: HeaderProps) {
         </Link>
         {userName && (
           <div className="flex items-center gap-3">
-            <div className="bg-[#ff71ce] text-[#1a1c1b] text-sm font-bold px-3 py-1.5 rounded-full border-2 border-[#1a1c1b] neo-shadow" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+            <div className="bg-[#ffaedd] text-[#1a1c1b] text-sm font-bold px-3 py-1.5 rounded-full border-2 border-[#1a1c1b]" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
               {userName}
             </div>
             <Form method="post" action="/logout">

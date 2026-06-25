@@ -37,7 +37,7 @@ export default function Home() {
         <div className="flex flex-col gap-3">
           <Link
             to="/register"
-            className="block w-full bg-[#ff71ce] text-[#1a1c1b] font-bold text-lg py-4 px-8 rounded-full border-4 border-[#1a1c1b] neo-shadow text-center neo-shadow-active transition-all"
+            className="block w-full bg-[#880069] text-white font-bold text-lg py-4 px-8 rounded-full border-4 border-[#1a1c1b] neo-shadow-lg text-center neo-shadow-lg-active transition-all"
             style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
           >
             新規登録

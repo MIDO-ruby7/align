@@ -115,7 +115,7 @@ export default function Register({ actionData }: Route.ComponentProps) {
           <div className="flex bg-[#f4f4f2] border-2 border-[#1a1c1b] rounded-full p-1 mb-6">
             <Link
               to="/login"
-              className="flex-1 text-center py-2 text-sm font-bold text-[#1a1c1b]/50"
+              className="flex-1 text-center py-2 text-sm font-bold text-[#1a1c1b]/70"
               style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
             >
               ログイン
@@ -230,7 +230,7 @@ export default function Register({ actionData }: Route.ComponentProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 py-4 px-8 bg-[#ff71ce] text-[#1a1c1b] font-bold text-lg rounded-full border-4 border-[#1a1c1b] neo-shadow neo-shadow-active transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-4 px-8 bg-[#880069] text-white font-bold text-lg rounded-full border-4 border-[#1a1c1b] neo-shadow-lg neo-shadow-lg-active transition-all disabled:opacity-50"
               style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
             >
               {isSubmitting ? (

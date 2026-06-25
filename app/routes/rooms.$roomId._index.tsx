@@ -385,7 +385,7 @@ export default function RoomLobby({ loaderData, actionData }: Route.ComponentPro
             <button
               type="submit"
               disabled={isStarting || players.length < 1}
-              className="w-full py-5 bg-[#ff71ce] border-4 border-[#1a1c1b] rounded-full font-black text-[#1a1c1b] text-xl neo-shadow-lg hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#1a1c1b] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-5 bg-[#880069] border-4 border-[#1a1c1b] rounded-full font-black text-white text-xl neo-shadow-lg neo-shadow-lg-active transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ fontFamily: "Quicksand" }}
             >
               {isStarting ? "Starting..." : "Start Game"}

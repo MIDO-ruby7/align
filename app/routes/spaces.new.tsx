@@ -77,58 +77,70 @@ export default function SpacesNew({ actionData }: Route.ComponentProps) {
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <div>
-          <h1 className="text-2xl font-bold text-center text-gray-900">
-            新しいスペースを作成
-          </h1>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            チームや組織のスペースを作成します
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#f9f9f7]">
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {/* 戻るリンク */}
+        <a
+          href="/spaces"
+          className="text-[#880069] text-sm flex items-center gap-1 mb-6 hover:underline font-medium"
+        >
+          &larr; スペース一覧に戻る
+        </a>
+
+        <h1
+          className="text-2xl font-black text-[#1a1c1b] mb-6"
+          style={{ fontFamily: "Quicksand" }}
+        >
+          新しいスペースを作成
+        </h1>
 
         {actionData?.error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-50 border-2 border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4">
             {actionData.error}
           </div>
         )}
 
-        <Form method="post" className="space-y-6">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
-            >
-              スペース名
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              required
-              maxLength={100}
-              placeholder="例: 開発チーム"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
+        <div className="bg-white border-4 border-[#1a1c1b] rounded-2xl neo-shadow-lg p-6">
+          <Form method="post" className="space-y-4">
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-bold text-[#1a1c1b] mb-1"
+                style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}
+              >
+                スペース名
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                maxLength={100}
+                placeholder="例: 開発チーム"
+                className="block w-full border-2 border-[#1a1c1b] rounded-full px-4 py-3 focus:outline-none focus:border-[#880069] font-medium"
+                style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}
+              />
+            </div>
 
-          <div className="flex gap-3">
-            <a
-              href="/spaces"
-              className="flex-1 flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-            >
-              キャンセル
-            </a>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none disabled:opacity-50"
-            >
-              {isSubmitting ? "作成中..." : "作成する"}
-            </button>
-          </div>
-        </Form>
+            <div className="flex gap-3 pt-2">
+              <a
+                href="/spaces"
+                className="flex-1 flex justify-center py-4 px-4 bg-white text-[#1a1c1b] border-4 border-[#1a1c1b] rounded-full font-bold neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all text-sm"
+                style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}
+              >
+                キャンセル
+              </a>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 flex justify-center py-4 px-4 bg-[#880069] text-white border-4 border-[#1a1c1b] rounded-full font-bold neo-shadow-lg neo-shadow-lg-active transition-all disabled:opacity-50 text-sm"
+                style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}
+              >
+                {isSubmitting ? "作成中..." : "作成する"}
+              </button>
+            </div>
+          </Form>
+        </div>
       </div>
     </div>
   );

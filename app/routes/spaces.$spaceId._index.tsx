@@ -252,7 +252,7 @@ export default function SpaceHub({ loaderData, actionData }: Route.ComponentProp
                     className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border-2 border-[#1a1c1b] ${
                       room.status === "waiting"
                         ? "bg-[#e7e482] text-[#1a1c1b]"
-                        : "bg-[#00bd76] text-white"
+                        : "bg-[#880069] text-white"
                     }`}
                   >
                     {room.status === "waiting" ? "待機中" : "プレイ中"}
@@ -310,7 +310,7 @@ export default function SpaceHub({ loaderData, actionData }: Route.ComponentProp
                 <button
                   type="submit"
                   disabled={isJoining}
-                  className="bg-[#e7e482] border-4 border-[#1a1c1b] text-[#1a1c1b] px-5 py-3 rounded-full font-bold neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all disabled:opacity-50 whitespace-nowrap"
+                  className="bg-[#880069] border-4 border-[#1a1c1b] text-white px-5 py-3 rounded-full font-bold neo-shadow hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#1a1c1b] transition-all disabled:opacity-50 whitespace-nowrap"
                 >
                   {isJoining ? "..." : "参加"}
                 </button>
